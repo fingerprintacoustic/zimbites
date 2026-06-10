@@ -1,8 +1,9 @@
 FROM node:20-alpine
 WORKDIR /app
-COPY package.json ./
-RUN npm install --legacy-peer-deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN npm install -g pnpm
+RUN pnpm install --frozen-lockfile
 COPY . .
-RUN npm run build
+RUN pnpm run build
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]
