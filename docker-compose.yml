@@ -1,0 +1,129 @@
+# ZimBites Food Delivery Platform
+# Docker Compose configuration for development and production
+
+version: '3.8'
+
+services:
+  # =============================================================================
+  # Application Service
+  # =============================================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zimbites-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=3000
+      - VITE_APP_ID=${VITE_APP_ID}
+      - OAUTH_SERVER_URL=${OAUTH_SERVER_URL}
+      - VITE_OAUTH_PORTAL_URL=${VITE_OAUTH_PORTAL_URL}
+      - OWNER_OPEN_ID=${OWNER_OPEN_ID}
+      - OWNER_NAME=${OWNER_NAME}
+      - BUILT_IN_FORGE_API_URL=${BUILT_IN_FORGE_API_URL}
+      - BUILT_IN_FORGE_API_KEY=${BUILT_IN_FORGE_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/trpc/system.health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - zimbites-network
+    volumes:
+      - app-data:/app/data
+
+  # =============================================================================
+  # Database Service (MySQL/TiDB for development)
+  # =============================================================================
+  db:
+    image: mysql:8.0
+    container_name: zimbites-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-zimbites_root_password}
+      - MYSQL_DATABASE=${DB_NAME:-zimbites}
+      - MYSQL_USER=${DB_USER:-zimbites}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-zimbites_password}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./drizzle/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-zimbites_root_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - zimbites-network
+
+  # =============================================================================
+  # Redis Service (for caching and sessions)
+  # =============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: zimbites-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zimbites-network
+
+  # =============================================================================
+  # Nginx Reverse Proxy (for production)
+  # =============================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: zimbites-nginx
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      - app
+    networks:
+      - zimbites-network
+    profiles:
+      - production
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  db-data:
+    driver: local
+  redis-data:
+    driver: local
+  app-data:
+    driver: local
+  nginx-logs:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  zimbites-network:
+    driver: bridge

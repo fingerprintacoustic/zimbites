@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1780373943277,
+      "tag": "0000_broken_bloodscream",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1780374643883,
+      "tag": "0001_futuristic_onslaught",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1780376875533,
+      "tag": "0002_military_harrier",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1781041661581,
+      "tag": "0003_concerned_northstar",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+*.log
+.env
+.env.*
+*.md
+*.cjs
+.cache
+pnpm-lock.yaml
+pnpm-workspace.yaml
+patches
