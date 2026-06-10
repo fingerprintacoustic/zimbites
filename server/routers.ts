@@ -509,6 +509,10 @@ export const appRouter = router({
           };
         } catch (error) {
           console.error("[OrderCreate] Database error:", error);
+          // Log the underlying cause for debugging
+          if (error instanceof Error && (error as any).cause) {
+            console.error("[OrderCreate] Cause:", (error as any).cause);
+          }
           throw new TRPCError({ 
             code: "INTERNAL_SERVER_ERROR", 
             message: error instanceof Error ? error.message : "Database error" 

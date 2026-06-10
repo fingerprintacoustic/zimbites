@@ -80,6 +80,14 @@ export async function getDb() {
   return _db;
 }
 
+
+// Get raw mysql2 pool for direct queries
+export async function getPool(): Promise<mysql.Pool | null> {
+  if (!_pool) {
+    await initDb();
+  }
+  return _pool;
+}
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
     throw new Error("User openId is required for upsert");
@@ -248,27 +256,61 @@ export async function getMenuItemById(id: number) {
 
 // Order queries
 export async function createOrder(data: InsertOrder) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Execute insert and get result
-  const result = await db.insert(orders).values(data);
-  
-  // Drizzle mysql2 returns a ResultSetHeader object but insertId may not be directly accessible
-  // We need to query for the order using orderNumber
-  const recentOrder = await db.select({ id: orders.id, orderNumber: orders.orderNumber })
-    .from(orders)
-    .where(eq(orders.orderNumber, data.orderNumber!))
-    .limit(1);
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
 
-  if (recentOrder.length === 0) {
-    throw new Error("Failed to create order - order not found after insert");
+  // Build insert query with only the columns that have values
+  const columns: string[] = [];
+  const placeholders: string[] = [];
+  const values: any[] = [];
+
+  const columnMap: Record<string, any> = {
+    customerId: data.customerId,
+    restaurantId: data.restaurantId,
+    orderNumber: data.orderNumber,
+    status: data.status || "pending",
+    deliveryAddress: data.deliveryAddress,
+    deliveryLatitude: data.deliveryLatitude,
+    deliveryLongitude: data.deliveryLongitude,
+    deliveryNotes: data.deliveryNotes,
+    subtotal: data.subtotal,
+    deliveryFee: data.deliveryFee,
+    tax: data.tax ?? 0,
+    discount: data.discount ?? 0,
+    platformCommission: data.platformCommission,
+    tip: data.tip ?? 0,
+    total: data.total,
+    paymentMethod: data.paymentMethod,
+    paymentStatus: data.paymentStatus || "pending",
+    paymentReference: data.paymentReference,
+  };
+
+  for (const [col, val] of Object.entries(columnMap)) {
+    if (val !== undefined && val !== null) {
+      columns.push(col);
+      placeholders.push("?");
+      values.push(val);
+    }
   }
 
-  return {
-    insertId: recentOrder[0].id,
-    affectedRows: 1,
-  };
+  const query = `INSERT INTO orders (${columns.join(", ")}) VALUES (${placeholders.join(", ")})`;
+  
+  try {
+    const [result]: any = await pool.query(query, values);
+    const insertId = result.insertId;
+
+    if (!insertId) {
+      throw new Error("Failed to create order - no insert ID returned");
+    }
+
+    return {
+      insertId: insertId,
+      affectedRows: result.affectedRows || 1,
+    };
+  } catch (error) {
+    console.error("[createOrder] SQL Error:", error);
+    throw error;
+  }
 }
 
 export async function getOrderById(id: number) {
