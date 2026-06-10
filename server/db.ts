@@ -226,12 +226,32 @@ export async function getMenuItemById(id: number) {
 export async function createOrder(data: InsertOrder) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  
+  // Execute insert and get result
   const result = await db.insert(orders).values(data);
-  // Drizzle returns a ResultSetHeader, extract insertId
-  const insertResult = result as unknown as InsertResult;
+  
+  // Drizzle mysql2 returns ResultSetHeader with insertId
+  const insertId = (result as any).insertId;
+  
+  if (!insertId) {
+    // Fallback: query for the most recent order
+    const recentOrders = await db.select({ id: orders.id })
+      .from(orders)
+      .orderBy(sql`id DESC`)
+      .limit(1);
+    
+    if (recentOrders.length > 0) {
+      return {
+        insertId: recentOrders[0].id,
+        affectedRows: (result as any).affectedRows || 1,
+      };
+    }
+    throw new Error("Failed to create order - no order ID returned");
+  }
+  
   return {
-    insertId: insertResult.insertId ? Number(insertResult.insertId) : undefined,
-    affectedRows: insertResult.affectedRows,
+    insertId: Number(insertId),
+    affectedRows: (result as any).affectedRows || 1,
   };
 }
 

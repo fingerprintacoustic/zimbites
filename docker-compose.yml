@@ -17,16 +17,17 @@ services:
       - "${APP_PORT:-3000}:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=mysql://zimbites:zimbites_password@db:3306/zimbites
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
       - PORT=3000
-      - VITE_APP_ID=${VITE_APP_ID}
-      - OAUTH_SERVER_URL=${OAUTH_SERVER_URL}
-      - VITE_OAUTH_PORTAL_URL=${VITE_OAUTH_PORTAL_URL}
-      - OWNER_OPEN_ID=${OWNER_OPEN_ID}
-      - OWNER_NAME=${OWNER_NAME}
-      - BUILT_IN_FORGE_API_URL=${BUILT_IN_FORGE_API_URL}
-      - BUILT_IN_FORGE_API_KEY=${BUILT_IN_FORGE_API_KEY}
+      - VITE_APP_ID=${VITE_APP_ID:-zimbites}
+      - OAUTH_SERVER_URL=${OAUTH_SERVER_URL:-http://localhost:3000}
+      - VITE_OAUTH_PORTAL_URL=${VITE_OAUTH_PORTAL_URL:-http://localhost:3000}
+      - OWNER_OPEN_ID=${OWNER_OPEN_ID:-owner_001}
+      - OWNER_NAME=${OWNER_NAME:-ZimBites Admin}
+      - BUILT_IN_FORGE_API_URL=${BUILT_IN_FORGE_API_URL:-https://api.example.com}
+      - BUILT_IN_FORGE_API_KEY=${BUILT_IN_FORGE_API_KEY:-your_forge_api_key_here}
+      - SESSION_SECRET=${SESSION_SECRET:-your-session-secret-change-in-production}
     depends_on:
       db:
         condition: service_healthy

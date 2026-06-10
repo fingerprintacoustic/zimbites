@@ -483,7 +483,7 @@ async function seedDatabase() {
       });
 
       // Add status history
-      await db.addOrderStatusHistory({
+      await db.insert(schema.orderStatusHistory).values({
         orderId: i + 1,
         status: "pending",
         notes: "Order placed",
@@ -491,7 +491,7 @@ async function seedDatabase() {
       });
 
       if (order.status !== "pending") {
-        await db.addOrderStatusHistory({
+        await db.insert(schema.orderStatusHistory).values({
           orderId: i + 1,
           status: "accepted",
           notes: "Order accepted",
