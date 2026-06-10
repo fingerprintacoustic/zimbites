@@ -93,8 +93,13 @@ export function registerDevLoginRoute(app: Express) {
   // Seed menu data endpoint - uses actual restaurant IDs from database
   app.get("/api/dev/seed-menu", async (req: Request, res: Response) => {
     try {
+      // Get raw connection for direct SQL queries
+      const conn = await getConnection();
+      
       // Get all approved restaurants
-      const restaurants = await db.getApprovedRestaurants();
+      const [restaurants] = await conn.query(
+        'SELECT id, name FROM restaurants WHERE isApproved = 1 AND isActive = 1'
+      ) as any;
       
       if (restaurants.length === 0) {
         res.status(400).json({ error: "No restaurants found. Please run the database seed first." });
@@ -103,11 +108,10 @@ export function registerDevLoginRoute(app: Express) {
 
       // Map restaurant names to IDs for menu seeding
       const restaurantMap: Record<string, number> = {};
-      restaurants.forEach(r => {
+      restaurants.forEach((r: any) => {
         restaurantMap[r.name.toLowerCase()] = r.id;
       });
 
-      const conn = await getConnection();
       const results = [];
 
       // Insert menu items for each restaurant
@@ -131,6 +135,7 @@ export function registerDevLoginRoute(app: Express) {
               [restaurantId, categoryName]
             ) as any;
             categoryId = catResult.insertId;
+            results.push(`Created category: ${categoryName} (id: ${categoryId})`);
           }
 
           // Insert items
@@ -152,7 +157,7 @@ export function registerDevLoginRoute(app: Express) {
       res.json({ success: true, results });
     } catch (error: any) {
       console.error("[SeedMenu] Error:", error);
-      res.status(500).json({ error: error.message, stack: error.stack });
+      res.status(500).json({ error: error.message });
     }
   });
 
