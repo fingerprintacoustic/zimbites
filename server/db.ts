@@ -47,7 +47,16 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      // Parse URL and add SSL for cloud databases like TiDB
+      const url = new URL(process.env.DATABASE_URL);
+      _db = drizzle({
+        host: url.hostname,
+        port: url.port ? parseInt(url.port) : 3306,
+        user: url.username,
+        password: url.password,
+        database: url.pathname.slice(1),
+        ssl: { rejectUnauthorized: false },
+      });
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;

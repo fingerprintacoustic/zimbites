@@ -86,6 +86,7 @@ export function registerDevLoginRoute(app: Express) {
       user: url.username,
       password: url.password,
       database: url.pathname.slice(1),
+      ssl: { rejectUnauthorized: false },
     });
   }
 
