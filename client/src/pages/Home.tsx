@@ -113,7 +113,7 @@ export default function Home() {
                 <Shield className="h-8 w-8 text-orange-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Safe & Secure</h3>
-              <p className="text-gray-600">Local payment methods you trust</p>
+              <p className="text-gray-600">Secure payments powered by 263Pay</p>
             </div>
 
             {/* Feature 4 */}
@@ -211,7 +211,7 @@ export default function Home() {
             <div>
               <h4 className="text-white font-semibold mb-4">Resources</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="https://github.com/zimbites/platform" className="hover:text-white">GitHub</a></li>
+                <li><a href="https://github.com/fingerprintacoustic/zimbites" className="hover:text-white">GitHub</a></li>
                 <li><a href="#" className="hover:text-white">Documentation</a></li>
                 <li><a href="#" className="hover:text-white">API</a></li>
               </ul>

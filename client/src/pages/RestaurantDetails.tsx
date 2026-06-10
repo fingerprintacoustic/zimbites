@@ -247,6 +247,9 @@ export default function RestaurantDetails() {
                       <span>Delivery Fee</span>
                       <span>ZWL 5.00</span>
                     </div>
+                    <p className="text-[10px] text-gray-500 text-right">
+                      Payments secured by 263Pay
+                    </p>
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total</span>
                       <span>ZWL {((cartTotal + 500) / 100).toFixed(2)}</span>

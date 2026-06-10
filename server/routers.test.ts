@@ -33,6 +33,13 @@ vi.mock("./db", () => ({
   getPlatformStats: vi.fn(),
   getOrderStats: vi.fn(),
   getApprovedRestaurants: vi.fn(),
+  getAllDrivers: vi.fn(),
+  getAllRestaurants: vi.fn(),
+  getAllOrders: vi.fn(),
+  approveRestaurant: vi.fn(),
+  approveDriver: vi.fn(),
+  createRating: vi.fn(),
+  getPlatformSettings: vi.fn(),
 }));
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
@@ -178,7 +185,7 @@ describe("order router", () => {
         deliveryAddress: "123 Test St",
         paymentMethod: "cash",
       })
-    ).rejects.toThrow("Please login");
+    ).rejects.toThrow("UNAUTHORIZED");
   });
 
   it("getById throws NOT_FOUND for non-existent order", async () => {
@@ -371,5 +378,48 @@ describe("admin router", () => {
 
     const result = await caller.admin.getUsers();
     expect(result).toEqual(mockUsers);
+  });
+
+  it("approveRestaurant calls db.approveRestaurant", async () => {
+    const { ctx } = createMockContext(mockAdminUser);
+    const caller = appRouter.createCaller(ctx);
+
+    const db = await import("./db");
+    vi.mocked(db.approveRestaurant).mockResolvedValue({ affectedRows: 1 } as any);
+
+    const result = await caller.admin.approveRestaurant({ restaurantId: 1 });
+    expect(result).toEqual({ success: true });
+    expect(db.approveRestaurant).toHaveBeenCalledWith(1);
+  });
+});
+
+describe("rating router", () => {
+  const mockUser: AuthenticatedUser = {
+    id: 1,
+    openId: "customer-001",
+    email: "john@example.com",
+    name: "John Smith",
+    loginMethod: "demo",
+    role: "customer",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastSignedIn: new Date(),
+  };
+
+  it("create calls db.createRating", async () => {
+    const { ctx } = createMockContext(mockUser);
+    const caller = appRouter.createCaller(ctx);
+
+    const db = await import("./db");
+    vi.mocked(db.createRating).mockResolvedValue({ affectedRows: 1 } as any);
+
+    const result = await caller.rating.create({
+      orderId: 1,
+      rating: 5,
+      comment: "Great!",
+      restaurantId: 1,
+    });
+    expect(result).toEqual({ success: true });
+    expect(db.createRating).toHaveBeenCalled();
   });
 });

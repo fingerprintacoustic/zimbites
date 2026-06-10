@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Spinner } from "@/components/ui/spinner";
-import { ArrowLeft, MapPin, Loader2 } from "lucide-react";
+import { ArrowLeft, MapPin, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 
@@ -46,7 +46,7 @@ export default function Checkout() {
   const [cartData, setCartData] = useState<CartData | null>(null);
 
   // Get platform settings
-  const { data: settings, isLoading: settingsLoading } = trpc.restaurant.getPlatformSettings.useQuery();
+  const { data: settings, isLoading: settingsLoading } = trpc.admin.getPlatformSettings.useQuery();
 
   const createOrderMutation = trpc.order.create.useMutation();
 
@@ -129,7 +129,12 @@ export default function Checkout() {
         deliveryNotes: specialInstructions,
         tip: tipAmount,
         // Include cart items from sessionStorage
-        cartItems: cartData.items,
+        cartItems: cartData.items.map(item => ({
+          menuItemId: item.menuItemId,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
       });
 
       toast.success("Order placed successfully!");
@@ -239,7 +244,9 @@ export default function Checkout() {
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>Payment Method</CardTitle>
-              <CardDescription>Select your preferred payment method</CardDescription>
+              <CardDescription>
+                Secure payments powered by 263Pay
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <RadioGroup value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
@@ -260,14 +267,23 @@ export default function Checkout() {
               </RadioGroup>
 
               {selectedPaymentMethod !== "cash_on_delivery" && (
-                <div className="mt-4">
-                  <Label>Payment Reference</Label>
-                  <Input
-                    placeholder="Enter transaction reference or confirmation number"
-                    value={paymentReference}
-                    onChange={(e) => setPaymentReference(e.target.value)}
-                    className="mt-2"
-                  />
+                <div className="mt-4 space-y-4">
+                  <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-3">
+                    <ShieldCheck className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div className="text-sm text-blue-800">
+                      <p className="font-semibold">Payment via 263Pay</p>
+                      <p>Please complete the payment in your 263Pay app and enter the reference below.</p>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Payment Reference</Label>
+                    <Input
+                      placeholder="Enter transaction reference or confirmation number"
+                      value={paymentReference}
+                      onChange={(e) => setPaymentReference(e.target.value)}
+                      className="mt-2"
+                    />
+                  </div>
                 </div>
               )}
 

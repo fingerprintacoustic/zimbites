@@ -225,15 +225,15 @@ class SDKServer {
       });
       const { openId, appId, name, role } = payload as Record<string, unknown>;
 
-      if (!isNonEmptyString(openId) || !isNonEmptyString(name)) {
-        console.warn("[Auth] Session payload missing required fields (openId or name)");
+      if (!isNonEmptyString(openId)) {
+        console.warn("[Auth] Session payload missing required fields (openId)");
         return null;
       }
 
       return {
         openId,
         appId: isNonEmptyString(appId) ? appId : "zimbites-default-id",
-        name,
+        name: isNonEmptyString(name) ? name : "User",
         role: isNonEmptyString(role) ? role : undefined,
       };
     } catch (error) {
@@ -307,6 +307,18 @@ class SDKServer {
         user = await db.getUserByOpenId(session.openId);
       } catch (error) {
         console.error("[Auth] Failed to sync user from session:", error);
+      }
+    } else if (session.role && user.role !== session.role) {
+      // Update role if session has a different one (e.g. dev login changed role)
+      try {
+        await db.upsertUser({
+          openId: user.openId,
+          role: session.role as any,
+          lastSignedIn: signedInAt,
+        });
+        user = await db.getUserByOpenId(user.openId);
+      } catch (error) {
+        console.error("[Auth] Failed to update user role from session:", error);
       }
     }
 

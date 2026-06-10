@@ -20,31 +20,28 @@ export default function RateOrder() {
 
   const { data: order, isLoading } = trpc.order.getById.useQuery({ id: orderId });
 
-  const handleSubmitRating = async () => {
-    if (!comment.trim()) {
-      toast.error("Please add a comment");
-      return;
-    }
+  const createRating = trpc.rating.create.useMutation();
 
+  const handleSubmitRating = async () => {
     setIsSubmitting(true);
     try {
       // Submit restaurant rating
-      // await trpc.rating.create.mutate({
-      //   orderId,
-      //   rating: restaurantRating,
-      //   comment,
-      //   type: 'restaurant'
-      // });
+      await createRating.mutateAsync({
+        orderId,
+        rating: restaurantRating,
+        comment,
+        restaurantId: order?.restaurantId,
+      });
 
       // Submit driver rating if applicable
-      // if (order?.driverId) {
-      //   await trpc.rating.create.mutate({
-      //     orderId,
-      //     rating: driverRating,
-      //     comment,
-      //     type: 'driver'
-      //   });
-      // }
+      if (order?.driverId) {
+        await createRating.mutateAsync({
+          orderId,
+          rating: driverRating,
+          comment: `Driver rating: ${comment}`,
+          driverId: order.driverId,
+        });
+      }
 
       toast.success("Thank you for your feedback!");
       setLocation("/orders");
@@ -168,22 +165,7 @@ export default function RateOrder() {
               />
             </div>
 
-            {/* Tip Option */}
-            <div className="border-t pt-8 bg-orange-50 p-4 rounded-lg">
-              <h3 className="font-medium mb-3">Would you like to add a tip?</h3>
-              <div className="grid grid-cols-4 gap-2">
-                {[0, 100, 200, 500].map((amount) => (
-                  <Button
-                    key={amount}
-                    variant="outline"
-                    className="h-12"
-                    onClick={() => toast.success(`Tip of ZWL ${(amount / 100).toFixed(2)} added`)}
-                  >
-                    {amount === 0 ? "No Tip" : `ZWL ${(amount / 100).toFixed(2)}`}
-                  </Button>
-                ))}
-              </div>
-            </div>
+
 
             {/* Submit Button */}
             <div className="flex gap-3">

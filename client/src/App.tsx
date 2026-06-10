@@ -16,10 +16,10 @@ import RateOrder from "./pages/RateOrder";
 import RestaurantDashboard from "./pages/RestaurantDashboard";
 import DriverDashboard from "./pages/DriverDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import MenuManagement from "./pages/MenuManagement";
-import OrderManagement from "./pages/OrderManagement";
+// Removed MenuManagement (mock)
+// Removed OrderManagement (mock)
 // Removed DriverDeliveryDashboard (mock)
-import AdminPlatformDashboard from "./pages/AdminPlatformDashboard";
+// Removed AdminPlatformDashboard (mock)
 
 function Router() {
   return (
@@ -34,12 +34,8 @@ function Router() {
       <Route path={"/profile"} component={UserProfile} />
       <Route path={"/rate-order/:id"} component={RateOrder} />
       <Route path={"/restaurant-dashboard"} component={RestaurantDashboard} />
-      <Route path={"/menu-management"} component={MenuManagement} />
-      <Route path={"/order-management"} component={OrderManagement} />
       <Route path={"/driver-dashboard"} component={DriverDashboard} />
-      {/* Removed mock driver route */}
       <Route path={"/admin-dashboard"} component={AdminDashboard} />
-      <Route path={"/admin-platform-dashboard"} component={AdminPlatformDashboard} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

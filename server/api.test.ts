@@ -12,7 +12,7 @@ const createMockContext = (overrides?: Partial<TrpcContext>): TrpcContext => {
       email: "test@example.com",
       name: "Test User",
       loginMethod: "manus",
-      role: "user",
+      role: "customer",
       createdAt: new Date(),
       updatedAt: new Date(),
       lastSignedIn: new Date(),
@@ -55,7 +55,7 @@ describe("Zimbites API - Core Procedures", () => {
 
       expect(result).toBeDefined();
       expect(result?.email).toBe("test@example.com");
-      expect(result?.role).toBe("user");
+      expect(result?.role).toBe("customer");
     });
 
     it("should return null when not authenticated", async () => {
@@ -154,11 +154,11 @@ describe("Zimbites API - Core Procedures", () => {
       expect(caller.order.getByCustomer).toBeDefined();
     });
 
-    it("should update order status", async () => {
+    it("should accept order", async () => {
       const ctx = createMockContext();
       const caller = appRouter.createCaller(ctx);
 
-      expect(caller.order.updateStatus).toBeDefined();
+      expect(caller.order.accept).toBeDefined();
     });
 
     it("should validate order items before creation", async () => {
@@ -253,29 +253,10 @@ describe("Zimbites API - Core Procedures", () => {
       expect(caller.rating.create).toBeDefined();
     });
 
-    it("should get restaurant ratings", async () => {
-      const ctx = createMockContext();
-      const caller = appRouter.createCaller(ctx);
 
-      expect(caller.rating.getRestaurantRatings).toBeDefined();
-    });
-
-    it("should get driver ratings", async () => {
-      const ctx = createMockContext();
-      const caller = appRouter.createCaller(ctx);
-
-      expect(caller.rating.getDriverRatings).toBeDefined();
-    });
   });
 
   describe("Tips", () => {
-    it("should add tip to order", async () => {
-      const ctx = createMockContext();
-      const caller = appRouter.createCaller(ctx);
-
-      expect(caller.tip.addTip).toBeDefined();
-    });
-
     it("should support tip amounts", async () => {
       const tipAmounts = [0, 100, 200, 500]; // in cents
 
@@ -294,26 +275,7 @@ describe("Zimbites API - Core Procedures", () => {
       expect(caller.admin.getPlatformSettings).toBeDefined();
     });
 
-    it("should update platform settings for admin", async () => {
-      const ctx = createAdminContext();
-      const caller = appRouter.createCaller(ctx);
 
-      expect(caller.admin.updatePlatformSettings).toBeDefined();
-    });
-
-    it("should get reports for admin", async () => {
-      const ctx = createAdminContext();
-      const caller = appRouter.createCaller(ctx);
-
-      expect(caller.admin.getReports).toBeDefined();
-    });
-
-    it("should allocate driver to order", async () => {
-      const ctx = createAdminContext();
-      const caller = appRouter.createCaller(ctx);
-
-      expect(caller.admin.allocateDriver).toBeDefined();
-    });
 
     it("should approve restaurants", async () => {
       const ctx = createAdminContext();
@@ -377,6 +339,8 @@ describe("Zimbites API - Core Procedures", () => {
         "in_transit",
         "delivered",
         "cancelled",
+        "rejected",
+        "refunded",
       ];
 
       validStatuses.forEach((status) => {
@@ -428,21 +392,21 @@ describe("Zimbites API - Core Procedures", () => {
 
   describe("Role-Based Access Control", () => {
     it("should allow customers to create orders", async () => {
-      const ctx = createMockContext({ user: { ...createMockContext().user!, role: "user" } });
+      const ctx = createMockContext({ user: { ...createMockContext().user!, role: "customer" } });
       const caller = appRouter.createCaller(ctx);
 
       expect(caller.order.create).toBeDefined();
     });
 
     it("should allow restaurant owners to manage menus", async () => {
-      const ctx = createMockContext({ user: { ...createMockContext().user!, role: "user" } });
+      const ctx = createMockContext({ user: { ...createMockContext().user!, role: "restaurant" } });
       const caller = appRouter.createCaller(ctx);
 
       expect(caller.menu.createItem).toBeDefined();
     });
 
     it("should allow drivers to update delivery status", async () => {
-      const ctx = createMockContext({ user: { ...createMockContext().user!, role: "user" } });
+      const ctx = createMockContext({ user: { ...createMockContext().user!, role: "driver" } });
       const caller = appRouter.createCaller(ctx);
 
       expect(caller.driver.updateLocation).toBeDefined();
@@ -468,19 +432,13 @@ describe("Zimbites API - Integration Tests", () => {
     // 1. Customer creates order
     expect(customerCaller.order.create).toBeDefined();
 
-    // 2. Admin allocates driver
-    expect(adminCaller.admin.allocateDriver).toBeDefined();
-
-    // 3. Driver updates location
-    const driverCtx = createMockContext({ user: { ...createMockContext().user!, role: "user" } });
+    // 2. Driver updates location
+    const driverCtx = createMockContext({ user: { ...createMockContext().user!, role: "driver" } });
     const driverCaller = appRouter.createCaller(driverCtx);
     expect(driverCaller.driver.updateLocation).toBeDefined();
 
-    // 4. Customer rates delivery
+    // 3. Customer rates delivery
     expect(customerCaller.rating.create).toBeDefined();
-
-    // 5. Customer adds tip
-    expect(customerCaller.tip.addTip).toBeDefined();
   });
 
   it("should support restaurant operations", async () => {
@@ -499,8 +457,8 @@ describe("Zimbites API - Integration Tests", () => {
     // 4. View orders
     expect(caller.order.getById).toBeDefined();
 
-    // 5. Update order status
-    expect(caller.order.updateStatus).toBeDefined();
+    // 5. Accept order
+    expect(caller.order.accept).toBeDefined();
   });
 
   it("should support driver operations", async () => {

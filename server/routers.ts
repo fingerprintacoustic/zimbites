@@ -1,12 +1,13 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure, restaurantOwnerProcedure, adminProcedure, driverProcedure } from "./_core/systemRouter";
+import { router, publicProcedure, protectedProcedure, restaurantOwnerProcedure, adminProcedure, driverProcedure, systemRouter } from "./_core/systemRouter";
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
 
-const ORDER_STATUSES = ["pending", "accepted", "preparing", "ready_for_pickup", "driver_assigned", "picked_up", "out_for_delivery", "delivered", "customer_confirmed", "cancelled", "rejected", "refunded"] as const;
+const ORDER_STATUSES = ["pending", "confirmed", "preparing", "ready", "picked_up", "in_transit", "delivered", "cancelled", "rejected", "refunded"] as const;
 
 export const appRouter = router({
+  system: systemRouter,
   auth: router({
     debug: publicProcedure.query(async ({ ctx }) => {
       const { COOKIE_NAME } = await import("@shared/const");
@@ -580,7 +581,7 @@ export const appRouter = router({
           throw new TRPCError({ code: "BAD_REQUEST", message: "Order cannot be accepted" });
         }
 
-        await db.updateOrder(input.orderId, { status: "accepted" });
+        await db.updateOrder(input.orderId, { status: "confirmed" as any });
         await db.addOrderStatusHistory({
           orderId: input.orderId,
           status: "accepted",
@@ -678,10 +679,10 @@ export const appRouter = router({
           throw new TRPCError({ code: "FORBIDDEN" });
         }
 
-        await db.updateOrder(input.orderId, { status: "ready_for_pickup" });
+        await db.updateOrder(input.orderId, { status: "ready" as any });
         await db.addOrderStatusHistory({
           orderId: input.orderId,
-          status: "ready_for_pickup",
+          status: "ready",
           notes: "Order ready for pickup",
           createdBy: ctx.user.id,
         });
@@ -723,12 +724,12 @@ export const appRouter = router({
 
         await db.updateOrder(input.orderId, { 
           driverId: driver.id,
-          status: "driver_assigned" 
+          status: "confirmed" as any 
         });
         await db.updateDriver(driver.id, { status: "on_delivery" });
         await db.addOrderStatusHistory({
           orderId: input.orderId,
-          status: "driver_assigned",
+          status: "confirmed",
           notes: "Driver assigned",
           createdBy: ctx.user.id,
         });
@@ -754,13 +755,13 @@ export const appRouter = router({
         if (!order) throw new TRPCError({ code: "NOT_FOUND" });
 
         await db.updateOrder(input.orderId, { 
-          status: "out_for_delivery",
+          status: "picked_up" as any,
           pickedUpAt: new Date(),
         });
         await db.updateDriverAssignment(input.orderId, { status: "picked_up", pickedUpAt: new Date() });
         await db.addOrderStatusHistory({
           orderId: input.orderId,
-          status: "out_for_delivery",
+          status: "picked_up",
           notes: "Driver picked up order",
           createdBy: ctx.user.id,
         });
@@ -768,6 +769,35 @@ export const appRouter = router({
         await db.createNotification({
           userId: order.customerId,
           title: "Order Picked Up",
+          message: `Your order #${order.orderNumber} has been picked up!`,
+          type: "order",
+          metadata: JSON.stringify({ orderId: input.orderId }),
+        });
+
+        return { success: true };
+      }),
+
+    startDelivery: driverProcedure
+      .input(z.object({ orderId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user?.id) throw new TRPCError({ code: "UNAUTHORIZED" });
+
+        const order = await db.getOrderById(input.orderId);
+        if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+
+        await db.updateOrder(input.orderId, { 
+          status: "in_transit" as any,
+        });
+        await db.addOrderStatusHistory({
+          orderId: input.orderId,
+          status: "in_transit",
+          notes: "Driver is on the way",
+          createdBy: ctx.user.id,
+        });
+
+        await db.createNotification({
+          userId: order.customerId,
+          title: "Order on the Way",
           message: `Your order #${order.orderNumber} is on its way!`,
           type: "order",
           metadata: JSON.stringify({ orderId: input.orderId }),
@@ -984,13 +1014,13 @@ export const appRouter = router({
 
         await db.updateOrder(input.orderId, { 
           driverId: driver.id,
-          status: "driver_assigned" 
+          status: "confirmed" as any 
         });
         await db.updateDriver(driver.id, { status: "on_delivery" });
         
         await db.addOrderStatusHistory({
           orderId: input.orderId,
-          status: "driver_assigned",
+          status: "confirmed",
           notes: "Driver accepted delivery",
           createdBy: ctx.user.id,
         });
@@ -1004,6 +1034,31 @@ export const appRouter = router({
       if (!driver) throw new TRPCError({ code: "NOT_FOUND" });
       return db.getOrdersByDriver(driver.id);
     }),
+  }),
+
+  rating: router({
+    create: protectedProcedure
+      .input(z.object({
+        orderId: z.number(),
+        rating: z.number().min(1).max(5),
+        comment: z.string().optional(),
+        restaurantId: z.number().optional(),
+        driverId: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user?.id) throw new TRPCError({ code: "UNAUTHORIZED" });
+        
+        await db.createRating({
+          orderId: input.orderId,
+          customerId: ctx.user.id,
+          rating: input.rating,
+          comment: input.comment,
+          restaurantId: input.restaurantId,
+          driverId: input.driverId,
+        });
+        
+        return { success: true };
+      }),
   }),
 
   notification: router({
@@ -1103,7 +1158,7 @@ export const appRouter = router({
         return db.getAllOrders(input?.limit || 100);
       }),
     
-    getPlatformSettings: adminProcedure.query(async () => {
+    getPlatformSettings: protectedProcedure.query(async () => {
       return db.getAllPlatformSettings();
     }),
     

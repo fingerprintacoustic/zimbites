@@ -13,6 +13,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const { logout } = useAuth();
   const [, setLocation] = useLocation();
+  const utils = trpc.useContext();
 
   const handleLogout = async () => {
     await logout();
@@ -20,10 +21,34 @@ export default function AdminDashboard() {
   };
 
   // Get platform settings
-  const { data: settings, isLoading: settingsLoading } = trpc.restaurant.getPlatformSettings.useQuery() || { data: null, isLoading: false };
+  const { data: settings, isLoading: settingsLoading } = trpc.admin.getPlatformSettings.useQuery();
   
   // Get platform stats
-  const { data: statsData, isLoading: statsLoading } = trpc.admin.getStats.useQuery() || { data: null, isLoading: false };
+  const { data: statsData, isLoading: statsLoading } = trpc.admin.getStats.useQuery();
+  
+  // Get users
+  const { data: usersData = [] } = trpc.admin.getUsers.useQuery();
+  
+  // Get restaurants
+  const { data: restaurantsData = [] } = trpc.admin.getRestaurants.useQuery({ includeUnapproved: true });
+  
+  // Get drivers
+  const { data: driversData = [] } = trpc.admin.getDrivers.useQuery({ includeUnapproved: true });
+  
+  // Get orders
+  const { data: ordersData = [] } = trpc.admin.getOrders.useQuery();
+
+  const approveRestaurant = trpc.admin.approveRestaurant.useMutation({
+    onSuccess: () => {
+      utils.admin.getRestaurants.invalidate();
+    }
+  });
+
+  const approveDriver = trpc.admin.approveDriver.useMutation({
+    onSuccess: () => {
+      utils.admin.getDrivers.invalidate();
+    }
+  });
 
   if (settingsLoading || statsLoading) {
     return (
@@ -120,13 +145,15 @@ export default function AdminDashboard() {
                   <CardTitle>Recent Orders</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="flex justify-between items-center pb-3 border-b last:border-b-0">
+                  {(ordersData || []).slice(0, 5).map((order: any) => (
+                    <div key={order.id} className="flex justify-between items-center pb-3 border-b last:border-b-0">
                       <div>
-                        <p className="font-medium">Order #{1000 + i}</p>
-                        <p className="text-sm text-gray-600">ZWL {(2500 + i * 100).toFixed(2)}</p>
+                        <p className="font-medium">{order.orderNumber}</p>
+                        <p className="text-sm text-gray-600">ZWL {(order.total / 100).toFixed(2)}</p>
                       </div>
-                      <Badge className="bg-green-100 text-green-800">Delivered</Badge>
+                      <Badge variant="outline">
+                        {order.status.replace(/_/g, " ").toUpperCase()}
+                      </Badge>
                     </div>
                   ))}
                 </CardContent>
@@ -166,14 +193,18 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="border rounded-lg p-4 flex justify-between items-center">
+                  {(restaurantsData || []).map((restaurant: any) => (
+                    <div key={restaurant.id} className="border rounded-lg p-4 flex justify-between items-center">
                       <div>
-                        <p className="font-medium">Restaurant #{i}</p>
-                        <p className="text-sm text-gray-600">Owner: User {i}</p>
+                        <p className="font-medium">{restaurant.name}</p>
+                        <p className="text-sm text-gray-600">Owner: {restaurant.ownerName} ({restaurant.ownerEmail})</p>
                       </div>
                       <div className="flex gap-2">
-                        <Badge className="bg-green-100 text-green-800">Approved</Badge>
+                        {restaurant.isApproved ? (
+                          <Badge className="bg-green-100 text-green-800">Approved</Badge>
+                        ) : (
+                          <Button size="sm" onClick={() => approveRestaurant.mutate({ restaurantId: restaurant.id })}>Approve</Button>
+                        )}
                         <Button variant="outline" size="sm">Edit</Button>
                       </div>
                     </div>
@@ -194,14 +225,18 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="border rounded-lg p-4 flex justify-between items-center">
+                  {(driversData || []).map((driver: any) => (
+                    <div key={driver.id} className="border rounded-lg p-4 flex justify-between items-center">
                       <div>
-                        <p className="font-medium">Driver #{i}</p>
-                        <p className="text-sm text-gray-600">Rating: 4.{7 + i}/5 • {50 + i * 10} deliveries</p>
+                        <p className="font-medium">{driver.name}</p>
+                        <p className="text-sm text-gray-600">Rating: {driver.averageRating}/5 • {driver.totalDeliveries} deliveries</p>
                       </div>
                       <div className="flex gap-2">
-                        <Badge className="bg-green-100 text-green-800">Active</Badge>
+                        {driver.isApproved ? (
+                          <Badge className="bg-green-100 text-green-800">Approved</Badge>
+                        ) : (
+                          <Button size="sm" onClick={() => approveDriver.mutate({ driverId: driver.id })}>Approve</Button>
+                        )}
                         <Button variant="outline" size="sm">View</Button>
                       </div>
                     </div>
@@ -219,15 +254,17 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="border rounded-lg p-4 flex justify-between items-center">
+                  {(ordersData || []).map((order: any) => (
+                    <div key={order.id} className="border rounded-lg p-4 flex justify-between items-center">
                       <div>
-                        <p className="font-medium">Order #{1000 + i}</p>
-                        <p className="text-sm text-gray-600">Customer {i} • ZWL {(2500 + i * 100).toFixed(2)}</p>
+                        <p className="font-medium">{order.orderNumber}</p>
+                        <p className="text-sm text-gray-600">Total: ZWL {(order.total / 100).toFixed(2)}</p>
                       </div>
                       <div className="flex gap-2">
-                        <Badge className="bg-green-100 text-green-800">Delivered</Badge>
-                        <Button variant="outline" size="sm">Details</Button>
+                        <Badge variant="outline">
+                          {order.status.replace(/_/g, " ").toUpperCase()}
+                        </Badge>
+                        <Button variant="outline" size="sm" onClick={() => setLocation(`/order/${order.id}`)}>Details</Button>
                       </div>
                     </div>
                   ))}

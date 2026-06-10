@@ -16,7 +16,7 @@ export default function CustomerHome() {
   const [location, setLocation] = useLocation();
 
   // Get approved restaurants
-  const { data: restaurants, isLoading } = trpc.restaurant.getApproved?.useQuery?.() || { data: [], isLoading: false };
+  const { data: restaurants, isLoading } = trpc.restaurant.getApproved.useQuery();
 
   // Filter restaurants based on search
   const filteredRestaurants = (restaurants || []).filter(r =>
@@ -60,7 +60,7 @@ export default function CustomerHome() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setLocation("/admin-platform-dashboard")}
+                    onClick={() => setLocation("/admin-dashboard")}
                     className="flex items-center gap-2"
                     title="Admin Dashboard"
                   >

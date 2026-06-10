@@ -17,6 +17,8 @@ const STATUS_COLORS = {
   in_transit: "bg-orange-100 text-orange-800",
   delivered: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
+  rejected: "bg-red-200 text-red-900",
+  refunded: "bg-gray-100 text-gray-800",
 };
 
 export default function OrderHistory() {
@@ -85,7 +87,7 @@ export default function OrderHistory() {
                     {/* Restaurant */}
                     <div>
                       <p className="text-sm text-gray-600">Restaurant</p>
-                      <p className="font-medium">Restaurant Name</p>
+                      <p className="font-medium">{order.restaurantName || 'Restaurant'}</p>
                       <p className="text-xs text-gray-500 mt-1">Order placed</p>
                     </div>
 

@@ -21,20 +21,20 @@ export default function DriverDashboard() {
   };
 
   // Get driver profile
-  const { data: driver, isLoading: driverLoading } = trpc.driver.getProfile?.useQuery?.() || { data: null, isLoading: false };
+  const { data: driver, isLoading: driverLoading } = trpc.driver.getProfile.useQuery();
 
   // Get assigned deliveries (only refetch when tab is visible)
   const utils = trpc.useContext();
-  const { data: deliveries = [], isLoading: deliveriesLoading } = trpc.driver.getAssignedDeliveries?.useQuery?.(
+  const { data: deliveries = [], isLoading: deliveriesLoading } = trpc.driver.getAssignedDeliveries.useQuery(
     undefined,
     { refetchInterval: false }
-  ) || { data: [], isLoading: false };
+  );
 
   // Get available orders
-  const { data: availableOrders = [] } = trpc.driver.getAvailableOrders?.useQuery?.(
+  const { data: availableOrders = [] } = trpc.driver.getAvailableOrders.useQuery(
     undefined,
     { refetchInterval: false }
-  ) || { data: [] };
+  );
 
   const acceptDelivery = trpc.driver.acceptDelivery.useMutation({
     onSuccess: () => {
@@ -56,8 +56,14 @@ export default function DriverDashboard() {
     }
   });
 
+  const startDelivery = trpc.order.startDelivery.useMutation({
+    onSuccess: () => {
+      utils.driver.getAssignedDeliveries.invalidate();
+    }
+  });
+
   // Get wallet
-  const { data: wallet } = trpc.driver.getWallet?.useQuery?.() || { data: null };
+  const { data: wallet } = trpc.driver.getWallet.useQuery();
 
   if (driverLoading || deliveriesLoading) {
     return (
@@ -203,12 +209,17 @@ export default function DriverDashboard() {
                           </Badge>
                         </div>
                         <div className="flex justify-end gap-2">
-                          {(delivery.status as string === "accepted" || delivery.status as string === "driver_assigned") && (
+                          {(delivery.status as string === "accepted" || delivery.status as string === "confirmed") && (
                             <Button onClick={() => confirmPickup.mutate({ orderId: delivery.orderId })}>
                               Pick Up
                             </Button>
                           )}
-                          {(delivery.status as string === "picked_up" || delivery.status as string === "out_for_delivery") && (
+                          {delivery.status as string === "picked_up" && (
+                            <Button onClick={() => startDelivery.mutate({ orderId: delivery.orderId })}>
+                              Start Delivery
+                            </Button>
+                          )}
+                          {delivery.status as string === "in_transit" && (
                             <Button onClick={() => confirmDelivery.mutate({ orderId: delivery.orderId })}>
                               Mark Delivered
                             </Button>

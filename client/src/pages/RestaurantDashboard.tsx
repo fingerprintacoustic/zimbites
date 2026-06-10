@@ -31,18 +31,18 @@ export default function RestaurantDashboard() {
   };
 
   // Get user's restaurant
-  const { data: restaurants = [] } = trpc.restaurant.getByOwner?.useQuery?.() || { data: [] };
+  const { data: restaurants = [] } = trpc.restaurant.getByOwner.useQuery();
   const restaurantId = restaurants?.[0]?.id;
 
   // Get restaurant orders
   const utils = trpc.useContext();
-  const { data: orders = [], isLoading } = trpc.order.getByRestaurant?.useQuery?.(
+  const { data: orders = [], isLoading } = trpc.order.getByRestaurant.useQuery(
     { restaurantId: restaurantId as number },
     { 
       enabled: !!restaurantId,
       refetchInterval: false // Only refetch on mutation or manual refresh
     }
-  ) || { data: [], isLoading: false };
+  );
 
   const acceptOrder = trpc.order.accept.useMutation({
     onSuccess: () => {
@@ -77,9 +77,9 @@ export default function RestaurantDashboard() {
   }
 
   const pendingOrders = (orders || []).filter((o: any) => o.status === "pending");
-  const acceptedOrders = (orders || []).filter((o: any) => o.status === "accepted");
+  const acceptedOrders = (orders || []).filter((o: any) => o.status === "confirmed");
   const preparingOrders = (orders || []).filter((o: any) => o.status === "preparing");
-  const readyOrders = (orders || []).filter((o: any) => o.status === "ready_for_pickup");
+  const readyOrders = (orders || []).filter((o: any) => o.status === "ready");
 
   const todayOrders = (orders || []).filter((o: any) => {
     const orderDate = new Date(o.createdAt).toDateString();

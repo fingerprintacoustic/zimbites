@@ -10,10 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ORDER_STATUSES = [
   { key: "pending", label: "Order Placed", icon: "📋" },
-  { key: "confirmed", label: "Confirmed", icon: "✅" },
+  { key: "confirmed", label: "Accepted", icon: "✅" },
   { key: "preparing", label: "Preparing", icon: "👨‍🍳" },
   { key: "ready", label: "Ready for Pickup", icon: "📦" },
-  { key: "picked_up", label: "Picked Up", icon: "🚗" },
+  { key: "picked_up", label: "Picked Up", icon: "🛍️" },
   { key: "in_transit", label: "On the Way", icon: "🚚" },
   { key: "delivered", label: "Delivered", icon: "🎉" },
 ];
@@ -150,7 +150,7 @@ export default function OrderTracking() {
                   {order.items?.map((item, index) => (
                     <div key={index} className="flex justify-between items-center pb-3 border-b last:border-b-0">
                       <div>
-                        <p className="font-medium">Menu Item</p>
+                        <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                       </div>
                       <span className="font-medium">ZWL {(item.price / 100).toFixed(2)}</span>

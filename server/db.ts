@@ -84,7 +84,7 @@ export async function getDb() {
 // Get raw mysql2 pool for direct queries
 export async function getPool(): Promise<mysql.Pool | null> {
   if (!_pool) {
-    await initDb();
+    await getDb();
   }
   return _pool;
 }
@@ -271,6 +271,7 @@ export async function createOrder(data: InsertOrder) {
     restaurantId: data.restaurantId,
     orderNumber: data.orderNumber,
     status: data.status || "pending",
+    specialInstructions: data.deliveryNotes,
     deliveryAddress: data.deliveryAddress,
     deliveryLatitude: data.deliveryLatitude,
     deliveryLongitude: data.deliveryLongitude,
@@ -325,7 +326,16 @@ export async function getOrderById(id: number) {
 export async function getOrdersByCustomer(customerId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(orders)
+  return db.select({
+    id: orders.id,
+    orderNumber: orders.orderNumber,
+    status: orders.status,
+    total: orders.total,
+    createdAt: orders.createdAt,
+    restaurantName: restaurants.name,
+  })
+    .from(orders)
+    .innerJoin(restaurants, eq(orders.restaurantId, restaurants.id))
     .where(eq(orders.customerId, customerId))
     .orderBy(desc(orders.createdAt));
 }
@@ -358,7 +368,7 @@ export async function getReadyForPickupOrders() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(orders)
-    .where(eq(orders.status, "ready_for_pickup"))
+    .where(eq(orders.status, "ready"))
     .orderBy(orders.createdAt);
 }
 
@@ -609,7 +619,7 @@ export async function getAvailableOrders() {
     .from(orders)
     .innerJoin(restaurants, eq(orders.restaurantId, restaurants.id))
     .where(and(
-      eq(orders.status, "ready_for_pickup"),
+      eq(orders.status, "ready"),
       sql`${orders.driverId} IS NULL`
     ))
     .orderBy(desc(orders.createdAt));
