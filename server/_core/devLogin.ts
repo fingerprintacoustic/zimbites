@@ -131,6 +131,7 @@ export function registerDevLoginRoute(app: Express) {
           
           if (existingCat) {
             categoryId = existingCat.id;
+            console.log(`[SeedMenu] Using existing category ${categoryId} for ${menu.categoryName}`);
           } else {
             const result = await db.createMenuCategory({
               restaurantId,
@@ -139,6 +140,7 @@ export function registerDevLoginRoute(app: Express) {
               isActive: 1,
             });
             categoryId = result.insertId;
+            console.log(`[SeedMenu] Created category ${categoryId}: ${menu.categoryName}`);
           }
           createdCategories.set(categoryKey, categoryId);
         }
@@ -146,7 +148,7 @@ export function registerDevLoginRoute(app: Express) {
         // Create menu items
         for (const item of menu.items) {
           try {
-            await db.createMenuItem({
+            const result = await db.createMenuItem({
               restaurantId,
               categoryId,
               name: item.name,
@@ -155,9 +157,10 @@ export function registerDevLoginRoute(app: Express) {
               preparationTime: item.prepTime,
               isAvailable: 1,
             });
+            console.log(`[SeedMenu] Created item: ${item.name} (category ${categoryId}), result:`, result);
             itemCount++;
-          } catch (e) {
-            // Item might already exist
+          } catch (e: any) {
+            console.error(`[SeedMenu] Item error ${item.name}:`, e?.message || e);
           }
         }
       }
