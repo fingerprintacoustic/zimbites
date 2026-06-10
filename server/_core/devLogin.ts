@@ -7,6 +7,74 @@ import * as db from "../db";
 // In-memory user store for demo (no database required)
 const demoUsers = new Map<string, any>();
 
+// Menu data structure
+const MENU_DATA: Record<string, Record<string, Array<{name: string, description: string, price: number, prepTime: number}>>> = {
+  "harare grill house": {
+    "Main Course": [
+      { name: "Sadza and Beef", description: "Traditional sadza with tender beef", price: 800, prepTime: 20 },
+      { name: "Roasted Chicken", description: "Half roasted chicken with sides", price: 1200, prepTime: 25 },
+    ],
+    "Grilled Meats": [
+      { name: "Grilled T-bone Steak", description: "Premium 500g T-bone steak", price: 2500, prepTime: 30 },
+      { name: "Grilled Pork Chops", description: "Two grilled pork chops", price: 1800, prepTime: 25 },
+    ],
+    "Sides": [
+      { name: "Coleslaw", description: "Fresh creamy coleslaw", price: 200, prepTime: 5 },
+      { name: "Chips", description: "Golden crispy chips", price: 250, prepTime: 10 },
+    ],
+    "Drinks": [
+      { name: "Soft Drink", description: "330ml can", price: 150, prepTime: 2 },
+      { name: "Bottled Water", description: "500ml", price: 100, prepTime: 2 },
+    ],
+  },
+  "spice garden": {
+    "Appetizers": [
+      { name: "Samosas", description: "4 vegetable samosas", price: 400, prepTime: 10 },
+      { name: "Pakoras", description: "Mixed vegetable pakoras", price: 350, prepTime: 10 },
+    ],
+    "Main Course": [
+      { name: "Butter Chicken", description: "Creamy butter chicken curry", price: 1200, prepTime: 25 },
+      { name: "Biryani", description: "Chicken biryani with raita", price: 1100, prepTime: 20 },
+    ],
+    "Curries": [
+      { name: "Lamb Curry", description: "Slow cooked lamb curry", price: 1500, prepTime: 30 },
+      { name: "Vegetable Curry", description: "Mixed vegetable curry", price: 800, prepTime: 20 },
+    ],
+    "Desserts": [
+      { name: "Gulab Jamun", description: "2 sweet gulab jamun", price: 300, prepTime: 5 },
+      { name: "Ice Cream", description: "Vanilla ice cream", price: 400, prepTime: 5 },
+    ],
+  },
+  "mama africa kitchen": {
+    "Traditional Dishes": [
+      { name: "Nyama Choma", description: "Grilled beef with Sadza", price: 1500, prepTime: 30 },
+      { name: "Madora", description: "Traditional pork stew", price: 1000, prepTime: 25 },
+    ],
+    "Meats": [
+      { name: "Grilled Chicken", description: "Half grilled chicken", price: 900, prepTime: 25 },
+      { name: "Grilled Fish", description: "Fresh grilled tilapia", price: 1100, prepTime: 30 },
+    ],
+    "Vegetables": [
+      { name: "Collard Greens", description: "Traditional greens", price: 400, prepTime: 15 },
+      { name: "Roasted Squash", description: "Seasonal roasted squash", price: 350, prepTime: 15 },
+    ],
+  },
+  "the great kitchen": {
+    "Main Dishes": [
+      { name: "Grilled Chicken", description: "Half grilled chicken with chips", price: 850, prepTime: 20 },
+      { name: "Beef Stew", description: "Traditional beef stew with sadza", price: 750, prepTime: 25 },
+    ],
+    "Sides": [
+      { name: "Chips", description: "Large portion of crispy chips", price: 200, prepTime: 10 },
+      { name: "Rice", description: "Steamed white rice", price: 150, prepTime: 5 },
+    ],
+    "Drinks": [
+      { name: "Soft Drink", description: "330ml can of your choice", price: 150, prepTime: 2 },
+      { name: "Juice", description: "Fresh fruit juice", price: 200, prepTime: 2 },
+    ],
+  },
+};
+
 export function registerDevLoginRoute(app: Express) {
   // Helper to get raw MySQL connection for direct queries
   async function getConnection() {
@@ -38,151 +106,52 @@ export function registerDevLoginRoute(app: Express) {
         restaurantMap[r.name.toLowerCase()] = r.id;
       });
 
-      // Define menu data per restaurant name pattern
-      const menuData = [
-        // Harare Grill House (ID 1)
-        { restaurantName: "harare grill house", categoryName: "Main Course", items: [
-          { name: "Sadza and Beef", description: "Traditional sadza with tender beef", price: 800, prepTime: 20 },
-          { name: "Roasted Chicken", description: "Half roasted chicken with sides", price: 1200, prepTime: 25 },
-        ]},
-        { restaurantName: "harare grill house", categoryName: "Grilled Meats", items: [
-          { name: "Grilled T-bone Steak", description: "Premium 500g T-bone steak", price: 2500, prepTime: 30 },
-          { name: "Grilled Pork Chops", description: "Two grilled pork chops", price: 1800, prepTime: 25 },
-        ]},
-        { restaurantName: "harare grill house", categoryName: "Sides", items: [
-          { name: "Coleslaw", description: "Fresh creamy coleslaw", price: 200, prepTime: 5 },
-          { name: "Chips", description: "Golden crispy chips", price: 250, prepTime: 10 },
-        ]},
-        { restaurantName: "harare grill house", categoryName: "Drinks", items: [
-          { name: "Soft Drink", description: "330ml can", price: 150, prepTime: 2 },
-          { name: "Bottled Water", description: "500ml", price: 100, prepTime: 2 },
-        ]},
-        
-        // Spice Garden (ID 2)
-        { restaurantName: "spice garden", categoryName: "Appetizers", items: [
-          { name: "Samosas", description: "4 vegetable samosas", price: 400, prepTime: 10 },
-          { name: "Pakoras", description: "Mixed vegetable pakoras", price: 350, prepTime: 10 },
-        ]},
-        { restaurantName: "spice garden", categoryName: "Main Course", items: [
-          { name: "Butter Chicken", description: "Creamy butter chicken curry", price: 1200, prepTime: 25 },
-          { name: "Biryani", description: "Chicken biryani with raita", price: 1100, prepTime: 20 },
-        ]},
-        { restaurantName: "spice garden", categoryName: "Curries", items: [
-          { name: "Lamb Curry", description: "Slow cooked lamb curry", price: 1500, prepTime: 30 },
-          { name: "Vegetable Curry", description: "Mixed vegetable curry", price: 800, prepTime: 20 },
-        ]},
-        { restaurantName: "spice garden", categoryName: "Desserts", items: [
-          { name: "Gulab Jamun", description: "2 sweet gulab jamun", price: 300, prepTime: 5 },
-          { name: "Ice Cream", description: "Vanilla ice cream", price: 400, prepTime: 5 },
-        ]},
-        
-        // Mama Africa Kitchen (ID 3)
-        { restaurantName: "mama africa kitchen", categoryName: "Traditional Dishes", items: [
-          { name: "Nyama Choma", description: "Grilled beef with Sadza", price: 1500, prepTime: 30 },
-          { name: "Madora", description: "Traditional pork stew", price: 1000, prepTime: 25 },
-        ]},
-        { restaurantName: "mama africa kitchen", categoryName: "Meats", items: [
-          { name: "Grilled Chicken", description: "Half grilled chicken", price: 900, prepTime: 25 },
-          { name: "Grilled Fish", description: "Fresh grilled tilapia", price: 1100, prepTime: 30 },
-        ]},
-        { restaurantName: "mama africa kitchen", categoryName: "Vegetables", items: [
-          { name: "Collard Greens", description: "Traditional greens", price: 400, prepTime: 15 },
-          { name: "Roasted Squash", description: "Seasonal roasted squash", price: 350, prepTime: 15 },
-        ]},
-        
-        // Pizza Paradise (ID 4)
-        { restaurantName: "pizza paradise", categoryName: "Pizzas", items: [
-          { name: "Margherita Pizza", description: "Classic tomato and mozzarella", price: 800, prepTime: 15 },
-          { name: "Pepperoni Pizza", description: "Pepperoni with cheese", price: 1000, prepTime: 15 },
-        ]},
-        { restaurantName: "pizza paradise", categoryName: "Sides", items: [
-          { name: "Garlic Bread", description: "Crusty bread with garlic butter", price: 300, prepTime: 10 },
-          { name: "Chicken Wings", description: "6 spicy wings", price: 500, prepTime: 15 },
-        ]},
-        
-        // Dragon Wok (ID 5)
-        { restaurantName: "dragon wok", categoryName: "Noodles", items: [
-          { name: "Chow Mein", description: "Stir-fried noodles with vegetables", price: 600, prepTime: 15 },
-          { name: "Lo Mein", description: "Soft noodles with sauce", price: 650, prepTime: 15 },
-        ]},
-        { restaurantName: "dragon wok", categoryName: "Rice Dishes", items: [
-          { name: "Fried Rice", description: "Egg fried rice with vegetables", price: 500, prepTime: 12 },
-          { name: "Yangzhou Rice", description: "Premium fried rice with BBQ pork", price: 750, prepTime: 15 },
-        ]},
+      const conn = await getConnection();
+      const results = [];
 
-        // The Great Kitchen
-        { restaurantName: "the great kitchen", categoryName: "Main Dishes", items: [
-          { name: "Grilled Chicken", description: "Half grilled chicken with chips", price: 850, prepTime: 20 },
-          { name: "Beef Stew", description: "Traditional beef stew with sadza", price: 750, prepTime: 25 },
-        ]},
-        { restaurantName: "the great kitchen", categoryName: "Sides", items: [
-          { name: "Chips", description: "Large portion of crispy chips", price: 200, prepTime: 10 },
-          { name: "Rice", description: "Steamed white rice", price: 150, prepTime: 5 },
-        ]},
-        { restaurantName: "the great kitchen", categoryName: "Drinks", items: [
-          { name: "Soft Drink", description: "330ml can of your choice", price: 150, prepTime: 2 },
-          { name: "Juice", description: "Fresh fruit juice", price: 200, prepTime: 2 },
-        ]},
-      ];
-
-      // Track created categories to avoid duplicates
-      const createdCategories: Map<string, number> = new Map();
-      let itemCount = 0;
-
-      for (const menu of menuData) {
-        const restaurantId = restaurantMap[menu.restaurantName];
+      // Insert menu items for each restaurant
+      for (const [restaurantName, categories] of Object.entries(MENU_DATA)) {
+        const restaurantId = restaurantMap[restaurantName];
         if (!restaurantId) continue;
 
-        // Get or create category
-        const categoryKey = `${restaurantId}-${menu.categoryName}`;
-        let categoryId = createdCategories.get(categoryKey);
-
-        if (!categoryId) {
-          // Check if category exists
-          const existingCategories = await db.getMenuCategoriesByRestaurant(restaurantId);
-          const existingCat = existingCategories.find(c => c.name === menu.categoryName);
+        for (const [categoryName, items] of Object.entries(categories as any)) {
+          // Create or get category
+          const [existingCats] = await conn.query(
+            'SELECT id FROM menu_categories WHERE restaurantId = ? AND name = ?',
+            [restaurantId, categoryName]
+          ) as any;
           
-          if (existingCat) {
-            categoryId = existingCat.id;
-            console.log(`[SeedMenu] Using existing category ${categoryId} for ${menu.categoryName}`);
+          let categoryId: number;
+          if (existingCats.length > 0) {
+            categoryId = existingCats[0].id;
           } else {
-            const result = await db.createMenuCategory({
-              restaurantId,
-              name: menu.categoryName,
-              displayOrder: existingCategories.length + 1,
-              isActive: 1,
-            });
-            categoryId = result.insertId;
-            console.log(`[SeedMenu] Created category ${categoryId}: ${menu.categoryName}`);
+            const [catResult] = await conn.query(
+              'INSERT INTO menu_categories (restaurantId, name, displayOrder, isActive, createdAt, updatedAt) VALUES (?, ?, 1, 1, NOW(), NOW())',
+              [restaurantId, categoryName]
+            ) as any;
+            categoryId = catResult.insertId;
           }
-          createdCategories.set(categoryKey, categoryId);
-        }
 
-        // Insert menu items directly using raw SQL to bypass any ORM issues
-        for (const item of menu.items) {
-          try {
-            const conn = await getConnection();
-            const [result] = await conn.query(
-              `INSERT INTO menu_items (restaurantId, categoryId, name, description, price, preparationTime, isAvailable, createdAt, updatedAt)
-               VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())`,
-              [restaurantId, categoryId, item.name, item.description, item.price, item.prepTime]
-            );
-            itemCount++;
-            console.log(`[SeedMenu] Inserted item: ${item.name}, id: ${(result as any).insertId}`);
-          } catch (e: any) {
-            console.error(`[SeedMenu] SQL Error ${item.name}:`, e?.message || e);
+          // Insert items
+          for (const item of items as any[]) {
+            try {
+              const [itemResult] = await conn.query(
+                'INSERT INTO menu_items (restaurantId, categoryId, name, description, price, preparationTime, isAvailable, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())',
+                [restaurantId, categoryId, item.name, item.description, item.price, item.prepTime]
+              ) as any;
+              results.push(`Created ${item.name} (id: ${itemResult.insertId})`);
+            } catch (e: any) {
+              results.push(`Error ${item.name}: ${e.message}`);
+            }
           }
         }
       }
 
-      res.json({ 
-        success: true, 
-        message: `Menu seeded: ${itemCount} items in ${createdCategories.size} categories`,
-        restaurants: restaurants.map(r => ({ id: r.id, name: r.name }))
-      });
+      await conn.end();
+      res.json({ success: true, results });
     } catch (error: any) {
       console.error("[SeedMenu] Error:", error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error.message, stack: error.stack });
     }
   });
 
