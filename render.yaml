@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: zimbites-app
+    name: zimbites
     env: node
     plan: starter
     branch: main
@@ -20,12 +20,12 @@ services:
       - key: VITE_APP_ID
         value: zimbites
       - key: OAUTH_SERVER_URL
-        value: https://zimbites-app.onrender.com
+        value: https://zimbites.onrender.com
       - key: VITE_OAUTH_PORTAL_URL
-        value: https://zimbites-app.onrender.com
+        value: https://zimbites.onrender.com
       - key: BETA_ACCESS_CODE
         value: zimtest123
       - key: OWNER_OPEN_ID
         value: admin-demo-001
       - key: APP_ID
-        value: zimbites-app
+        value: zimbites
