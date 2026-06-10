@@ -206,7 +206,7 @@ export const driverAssignments = mysqlTable("driverAssignments", {
   id: int("id").autoincrement().primaryKey(),
   orderId: int("orderId").notNull(),
   driverId: int("driverId").notNull(),
-  status: mysqlEnum("status", ["pending", "accepted", "rejected", "completed"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["pending", "accepted", "picked_up", "completed"]).default("pending").notNull(),
   assignedAt: timestamp("assignedAt").defaultNow().notNull(),
   acceptedAt: timestamp("acceptedAt"),
   pickedUpAt: timestamp("pickedUpAt"),
