@@ -1,5 +1,6 @@
 import { eq, and, desc, gte, lte, like, inArray, sql, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
 import type { ResultSetHeader } from "mysql2/promise";
 import { 
   InsertUser, 
@@ -43,6 +44,7 @@ import { ENV } from './_core/env';
 type InsertResult = ResultSetHeader & { insertId?: number | bigint };
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: mysql.Pool | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -56,24 +58,20 @@ export async function getDb() {
                        url.hostname.includes('.mysql.') ||
                        url.searchParams.has('ssl');
       
-      // Build connection config - drizzle-orm mysql2 uses connection params
-      const config: any = {
+      // Create a mysql2 pool
+      _pool = mysql.createPool({
         host: url.hostname,
         port: url.port ? parseInt(url.port) : 3306,
         user: url.username,
         password: url.password,
         database: url.pathname.slice(1),
-      };
+        ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
+      });
       
-      // Add SSL if needed
-      if (needsSsl) {
-        config.ssl = true;  // Try simple true first
-      }
+      // Create drizzle with the pool
+      _db = drizzle(_pool);
       
-      // Create drizzle instance
-      _db = drizzle(config);
-      
-      console.log(`[Database] Connecting to ${url.hostname}:${url.port || 3306}${needsSsl ? ' (SSL)' : ''}`);
+      console.log(`[Database] Connected to ${url.hostname}:${url.port || 3306}${needsSsl ? ' (SSL)' : ''}`);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
