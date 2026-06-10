@@ -226,10 +226,12 @@ export async function getMenuItemById(id: number) {
 export async function createOrder(data: InsertOrder) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(orders).values(data) as InsertResult;
+  const result = await db.insert(orders).values(data);
+  // Drizzle returns a ResultSetHeader, extract insertId
+  const insertResult = result as unknown as InsertResult;
   return {
-    insertId: result.insertId ? Number(result.insertId) : undefined,
-    affectedRows: result.affectedRows,
+    insertId: insertResult.insertId ? Number(insertResult.insertId) : undefined,
+    affectedRows: insertResult.affectedRows,
   };
 }
 
