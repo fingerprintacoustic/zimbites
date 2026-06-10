@@ -47,7 +47,7 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      // Parse URL and add SSL for cloud databases like TiDB
+      // Parse URL to detect SSL requirement
       const url = new URL(process.env.DATABASE_URL);
       
       // Determine if SSL is needed based on hostname patterns
@@ -56,7 +56,7 @@ export async function getDb() {
                        url.hostname.includes('.mysql.') ||
                        url.searchParams.has('ssl');
       
-      // Build connection config
+      // Build connection config - drizzle-orm mysql2 uses connection params
       const config: any = {
         host: url.hostname,
         port: url.port ? parseInt(url.port) : 3306,
@@ -67,10 +67,13 @@ export async function getDb() {
       
       // Add SSL if needed
       if (needsSsl) {
-        config.ssl = { rejectUnauthorized: false };
+        config.ssl = true;  // Try simple true first
       }
       
+      // Create drizzle instance
       _db = drizzle(config);
+      
+      console.log(`[Database] Connecting to ${url.hostname}:${url.port || 3306}${needsSsl ? ' (SSL)' : ''}`);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
