@@ -8,6 +8,19 @@ import * as db from "../db";
 const demoUsers = new Map<string, any>();
 
 export function registerDevLoginRoute(app: Express) {
+  // Helper to get raw MySQL connection for direct queries
+  async function getConnection() {
+    const url = new URL(process.env.DATABASE_URL || '');
+    const mysql = await import('mysql2/promise');
+    return mysql.createConnection({
+      host: url.hostname,
+      port: url.port ? parseInt(url.port) : 3306,
+      user: url.username,
+      password: url.password,
+      database: url.pathname.slice(1),
+    });
+  }
+
   // Seed menu data endpoint - uses actual restaurant IDs from database
   app.get("/api/dev/seed-menu", async (req: Request, res: Response) => {
     try {
@@ -145,22 +158,19 @@ export function registerDevLoginRoute(app: Express) {
           createdCategories.set(categoryKey, categoryId);
         }
 
-        // Create menu items
+        // Insert menu items directly using raw SQL to bypass any ORM issues
         for (const item of menu.items) {
           try {
-            const result = await db.createMenuItem({
-              restaurantId,
-              categoryId,
-              name: item.name,
-              description: item.description,
-              price: item.price,
-              preparationTime: item.prepTime,
-              isAvailable: 1,
-            });
-            console.log(`[SeedMenu] Created item: ${item.name} (category ${categoryId}), result:`, result);
+            const conn = await getConnection();
+            const [result] = await conn.query(
+              `INSERT INTO menu_items (restaurantId, categoryId, name, description, price, preparationTime, isAvailable, createdAt, updatedAt)
+               VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())`,
+              [restaurantId, categoryId, item.name, item.description, item.price, item.prepTime]
+            );
             itemCount++;
+            console.log(`[SeedMenu] Inserted item: ${item.name}, id: ${(result as any).insertId}`);
           } catch (e: any) {
-            console.error(`[SeedMenu] Item error ${item.name}:`, e?.message || e);
+            console.error(`[SeedMenu] SQL Error ${item.name}:`, e?.message || e);
           }
         }
       }
