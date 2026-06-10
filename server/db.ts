@@ -50,10 +50,13 @@ export async function getDb() {
       // Parse URL and add SSL for cloud databases like TiDB
       const url = new URL(process.env.DATABASE_URL);
       
-      // Check if URL already has ssl parameter
-      const hasSsl = url.searchParams.has('ssl') || url.protocol === 'mysqls';
+      // Determine if SSL is needed based on hostname patterns
+      const needsSsl = url.hostname.includes('tidbcloud') || 
+                       url.hostname.includes('.sql.') || 
+                       url.hostname.includes('.mysql.') ||
+                       url.searchParams.has('ssl');
       
-      // Create connection config
+      // Build connection config
       const config: any = {
         host: url.hostname,
         port: url.port ? parseInt(url.port) : 3306,
@@ -62,8 +65,8 @@ export async function getDb() {
         database: url.pathname.slice(1),
       };
       
-      // Add SSL if needed (for TiDB cloud)
-      if (url.hostname.includes('tidbcloud') || url.hostname.includes('.sql.') || hasSsl) {
+      // Add SSL if needed
+      if (needsSsl) {
         config.ssl = { rejectUnauthorized: false };
       }
       
