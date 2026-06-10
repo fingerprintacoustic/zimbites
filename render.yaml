@@ -2,9 +2,11 @@ services:
   - type: web
     name: zimbites-app
     env: node
-    plan: free
+    plan: starter
+    autoDeploy: true
     buildCommand: npm install && npm run build
     startCommand: npm start
+    healthCheckPath: /api/trpc/system.health
     envVars:
       - key: NODE_VERSION
         value: 20
@@ -17,7 +19,9 @@ services:
       - key: VITE_APP_ID
         value: zimbites
       - key: OAUTH_SERVER_URL
-        value: http://localhost:3000
+        value: https://zimbites-app.onrender.com
+      - key: VITE_OAUTH_PORTAL_URL
+        value: https://zimbites-app.onrender.com
       - key: BETA_ACCESS_CODE
         value: zimtest123
       - key: OWNER_OPEN_ID
