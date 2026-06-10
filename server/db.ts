@@ -271,15 +271,14 @@ export async function createOrder(data: InsertOrder) {
     restaurantId: data.restaurantId,
     orderNumber: data.orderNumber,
     status: data.status || "pending",
-    specialInstructions: data.deliveryNotes,
     deliveryAddress: data.deliveryAddress,
     deliveryLatitude: data.deliveryLatitude,
     deliveryLongitude: data.deliveryLongitude,
     deliveryNotes: data.deliveryNotes,
     subtotal: data.subtotal,
     deliveryFee: data.deliveryFee,
-    // Note: tax, discount might not exist in older DB schemas
-    // platformCommission exists but needs a default value
+    tax: data.tax ?? 0,
+    discount: data.discount ?? 0,
     platformCommission: data.platformCommission ?? 0,
     tip: data.tip ?? 0,
     total: data.total,
@@ -386,9 +385,30 @@ export async function updateOrderStatus(id: number, status: string) {
 
 // Order Item queries
 export async function createOrderItems(items: InsertOrderItem[]) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.insert(orderItems).values(items);
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+  
+  // Use raw SQL to insert order items to ensure all fields are properly handled
+  for (const item of items) {
+    const query = `INSERT INTO orderItems (orderId, menuItemId, name, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?, ?)`;
+    const values = [
+      item.orderId,
+      item.menuItemId,
+      item.name,
+      item.quantity,
+      item.price,
+      item.subtotal || (item.quantity * item.price)
+    ];
+    
+    try {
+      await pool.query(query, values);
+    } catch (error) {
+      console.error("[createOrderItems] Error inserting item:", error);
+      throw error;
+    }
+  }
+  
+  return { success: true };
 }
 
 export async function getOrderItems(orderId: number) {
