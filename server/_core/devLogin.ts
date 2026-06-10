@@ -120,9 +120,9 @@ export function registerDevLoginRoute(app: Express) {
         if (!restaurantId) continue;
 
         for (const [categoryName, items] of Object.entries(categories as any)) {
-          // Create or get category
+          // Create or get category (use correct table name: menuCategories)
           const [existingCats] = await conn.query(
-            'SELECT id FROM menu_categories WHERE restaurantId = ? AND name = ?',
+            'SELECT id FROM menuCategories WHERE restaurantId = ? AND name = ?',
             [restaurantId, categoryName]
           ) as any;
           
@@ -131,18 +131,18 @@ export function registerDevLoginRoute(app: Express) {
             categoryId = existingCats[0].id;
           } else {
             const [catResult] = await conn.query(
-              'INSERT INTO menu_categories (restaurantId, name, displayOrder, isActive) VALUES (?, ?, 1, 1)',
+              'INSERT INTO menuCategories (restaurantId, name, displayOrder, isActive) VALUES (?, ?, 1, 1)',
               [restaurantId, categoryName]
             ) as any;
             categoryId = catResult.insertId;
             results.push(`Created category: ${categoryName} (id: ${categoryId})`);
           }
 
-          // Insert items
+          // Insert items (use correct table name: menuItems)
           for (const item of items as any[]) {
             try {
               const [itemResult] = await conn.query(
-                'INSERT INTO menu_items (restaurantId, categoryId, name, description, price, preparationTime, isAvailable) VALUES (?, ?, ?, ?, ?, ?, 1)',
+                'INSERT INTO menuItems (restaurantId, categoryId, name, description, price, preparationTime, isAvailable) VALUES (?, ?, ?, ?, ?, ?, 1)',
                 [restaurantId, categoryId, item.name, item.description, item.price, item.prepTime]
               ) as any;
               results.push(`Created ${item.name} (id: ${itemResult.insertId})`);
