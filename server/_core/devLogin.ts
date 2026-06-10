@@ -96,6 +96,20 @@ export function registerDevLoginRoute(app: Express) {
           { name: "Fried Rice", description: "Egg fried rice with vegetables", price: 500, prepTime: 12 },
           { name: "Yangzhou Rice", description: "Premium fried rice with BBQ pork", price: 750, prepTime: 15 },
         ]},
+
+        // The Great Kitchen
+        { restaurantName: "the great kitchen", categoryName: "Main Dishes", items: [
+          { name: "Grilled Chicken", description: "Half grilled chicken with chips", price: 850, prepTime: 20 },
+          { name: "Beef Stew", description: "Traditional beef stew with sadza", price: 750, prepTime: 25 },
+        ]},
+        { restaurantName: "the great kitchen", categoryName: "Sides", items: [
+          { name: "Chips", description: "Large portion of crispy chips", price: 200, prepTime: 10 },
+          { name: "Rice", description: "Steamed white rice", price: 150, prepTime: 5 },
+        ]},
+        { restaurantName: "the great kitchen", categoryName: "Drinks", items: [
+          { name: "Soft Drink", description: "330ml can of your choice", price: 150, prepTime: 2 },
+          { name: "Juice", description: "Fresh fruit juice", price: 200, prepTime: 2 },
+        ]},
       ];
 
       // Track created categories to avoid duplicates
