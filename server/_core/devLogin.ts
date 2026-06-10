@@ -131,7 +131,7 @@ export function registerDevLoginRoute(app: Express) {
             categoryId = existingCats[0].id;
           } else {
             const [catResult] = await conn.query(
-              'INSERT INTO menu_categories (restaurantId, name, displayOrder, isActive, createdAt, updatedAt) VALUES (?, ?, 1, 1, NOW(), NOW())',
+              'INSERT INTO menu_categories (restaurantId, name, displayOrder, isActive) VALUES (?, ?, 1, 1)',
               [restaurantId, categoryName]
             ) as any;
             categoryId = catResult.insertId;
@@ -142,7 +142,7 @@ export function registerDevLoginRoute(app: Express) {
           for (const item of items as any[]) {
             try {
               const [itemResult] = await conn.query(
-                'INSERT INTO menu_items (restaurantId, categoryId, name, description, price, preparationTime, isAvailable, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())',
+                'INSERT INTO menu_items (restaurantId, categoryId, name, description, price, preparationTime, isAvailable) VALUES (?, ?, ?, ?, ?, ?, 1)',
                 [restaurantId, categoryId, item.name, item.description, item.price, item.prepTime]
               ) as any;
               results.push(`Created ${item.name} (id: ${itemResult.insertId})`);
