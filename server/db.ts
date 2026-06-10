@@ -254,28 +254,20 @@ export async function createOrder(data: InsertOrder) {
   // Execute insert and get result
   const result = await db.insert(orders).values(data);
   
-  // Drizzle mysql2 returns ResultSetHeader with insertId
-  const insertId = (result as any).insertId;
-  
-  if (!insertId) {
-    // Fallback: query for the most recent order
-    const recentOrders = await db.select({ id: orders.id })
-      .from(orders)
-      .orderBy(sql`id DESC`)
-      .limit(1);
-    
-    if (recentOrders.length > 0) {
-      return {
-        insertId: recentOrders[0].id,
-        affectedRows: (result as any).affectedRows || 1,
-      };
-    }
-    throw new Error("Failed to create order - no order ID returned");
+  // Drizzle mysql2 returns a ResultSetHeader object but insertId may not be directly accessible
+  // We need to query for the order using orderNumber
+  const recentOrder = await db.select({ id: orders.id, orderNumber: orders.orderNumber })
+    .from(orders)
+    .where(eq(orders.orderNumber, data.orderNumber!))
+    .limit(1);
+
+  if (recentOrder.length === 0) {
+    throw new Error("Failed to create order - order not found after insert");
   }
-  
+
   return {
-    insertId: Number(insertId),
-    affectedRows: (result as any).affectedRows || 1,
+    insertId: recentOrder[0].id,
+    affectedRows: 1,
   };
 }
 
