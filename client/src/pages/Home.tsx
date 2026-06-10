@@ -211,7 +211,6 @@ export default function Home() {
             <div>
               <h4 className="text-white font-semibold mb-4">Resources</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="https://github.com/fingerprintacoustic/zimbites" className="hover:text-white">GitHub</a></li>
                 <li><a href="#" className="hover:text-white">Documentation</a></li>
                 <li><a href="#" className="hover:text-white">API</a></li>
               </ul>
