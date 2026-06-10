@@ -277,8 +277,9 @@ export async function createOrder(data: InsertOrder) {
     deliveryNotes: data.deliveryNotes,
     subtotal: data.subtotal,
     deliveryFee: data.deliveryFee,
-    // Note: tax, discount, platformCommission columns might not exist in older DB schemas
-    // We calculate and include them but won't insert if they cause issues
+    // Note: tax, discount might not exist in older DB schemas
+    // platformCommission exists but needs a default value
+    platformCommission: data.platformCommission ?? 0,
     tip: data.tip ?? 0,
     total: data.total,
     paymentMethod: data.paymentMethod,
