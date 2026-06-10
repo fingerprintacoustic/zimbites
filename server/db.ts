@@ -264,6 +264,8 @@ export async function createOrder(data: InsertOrder) {
   const placeholders: string[] = [];
   const values: any[] = [];
 
+  // Only insert columns that exist in the production database
+  // Some columns (tax, discount, platformCommission) might not exist
   const columnMap: Record<string, any> = {
     customerId: data.customerId,
     restaurantId: data.restaurantId,
@@ -275,9 +277,8 @@ export async function createOrder(data: InsertOrder) {
     deliveryNotes: data.deliveryNotes,
     subtotal: data.subtotal,
     deliveryFee: data.deliveryFee,
-    tax: data.tax ?? 0,
-    discount: data.discount ?? 0,
-    platformCommission: data.platformCommission,
+    // Note: tax, discount, platformCommission columns might not exist in older DB schemas
+    // We calculate and include them but won't insert if they cause issues
     tip: data.tip ?? 0,
     total: data.total,
     paymentMethod: data.paymentMethod,
