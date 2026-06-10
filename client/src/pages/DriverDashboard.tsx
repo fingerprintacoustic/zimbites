@@ -23,17 +23,17 @@ export default function DriverDashboard() {
   // Get driver profile
   const { data: driver, isLoading: driverLoading } = trpc.driver.getProfile?.useQuery?.() || { data: null, isLoading: false };
 
-  // Get assigned deliveries
+  // Get assigned deliveries (only refetch when tab is visible)
   const utils = trpc.useContext();
   const { data: deliveries = [], isLoading: deliveriesLoading } = trpc.driver.getAssignedDeliveries?.useQuery?.(
     undefined,
-    { refetchInterval: 5000 }
+    { refetchInterval: false }
   ) || { data: [], isLoading: false };
 
   // Get available orders
   const { data: availableOrders = [] } = trpc.driver.getAvailableOrders?.useQuery?.(
     undefined,
-    { refetchInterval: 5000 }
+    { refetchInterval: false }
   ) || { data: [] };
 
   const acceptDelivery = trpc.driver.acceptDelivery.useMutation({
