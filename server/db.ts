@@ -706,9 +706,19 @@ export async function clearCart(cartId: number) {
 
 // Order Status History queries
 export async function addOrderStatusHistory(data: InsertOrderStatusHistory) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  return db.insert(orderStatusHistory).values(data);
+  const pool = await getPool();
+  if (!pool) throw new Error("Database not available");
+
+  const columns = ["orderId", "status", "notes", "createdBy"];
+  const values = [
+    data.orderId,
+    data.status,
+    data.notes || null,
+    data.createdBy || null,
+  ];
+
+  const query = `INSERT INTO orderStatusHistory (${columns.join(", ")}) VALUES (?, ?, ?, ?)`;
+  return pool.query(query, values);
 }
 
 export async function getOrderStatusHistory(orderId: number) {
