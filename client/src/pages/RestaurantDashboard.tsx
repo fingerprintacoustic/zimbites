@@ -40,7 +40,7 @@ export default function RestaurantDashboard() {
     { restaurantId: restaurantId as number },
     { 
       enabled: !!restaurantId,
-      refetchInterval: 5000 // Auto-refresh every 5 seconds
+      refetchInterval: false // Only refetch on mutation or manual refresh
     }
   ) || { data: [], isLoading: false };
 

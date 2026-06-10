@@ -26,7 +26,7 @@ export default function OrderHistory() {
   // Get customer orders
   const { data: orders, isLoading } = trpc.order.getByCustomer.useQuery(
     undefined,
-    { refetchInterval: 10000 } // Refresh order list every 10 seconds
+    { refetchInterval: false } // Refresh order list every 10 seconds
   );
 
   if (isLoading) {

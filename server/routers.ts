@@ -753,7 +753,7 @@ export const appRouter = router({
           status: "out_for_delivery",
           pickedUpAt: new Date(),
         });
-        await db.updateDriverAssignment(input.orderId, { pickedUpAt: new Date() });
+        await db.updateDriverAssignment(input.orderId, { status: "picked_up", pickedUpAt: new Date() });
         await db.addOrderStatusHistory({
           orderId: input.orderId,
           status: "out_for_delivery",
