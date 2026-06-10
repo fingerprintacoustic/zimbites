@@ -3,6 +3,7 @@ services:
     name: zimbites-app
     env: node
     plan: starter
+    branch: master
     autoDeploy: true
     buildCommand: npm install && npm run build
     startCommand: npm start
