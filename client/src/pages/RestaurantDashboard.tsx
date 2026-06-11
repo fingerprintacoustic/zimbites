@@ -360,11 +360,13 @@ export default function RestaurantDashboard() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Menu Management</CardTitle>
-                  <Button>Add Item</Button>
+                  <Link href="/restaurant-dashboard/menu">
+                    <Button>Go to Menu Management</Button>
+                  </Link>
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Menu management interface coming soon</p>
+                <p className="text-gray-600">Manage your restaurant's menu items and categories.</p>
               </CardContent>
             </Card>
           </TabsContent>

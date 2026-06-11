@@ -1,26 +1,30 @@
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 dotenv.config();
 
-import mysql from "mysql2/promise";
+import * as mysql from "mysql2/promise";
 
 async function checkRestaurant() {
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) throw new Error("DATABASE_URL not set");
 
+  console.log("Attempting to connect to database...");
   const connection = await mysql.createConnection(dbUrl);
+  console.log("Database connected.");
 
-  // Get the restaurant owner for restaurant 360001
+  console.log("Querying for restaurant 360002...");
   const [restaurants] = await connection.execute(
-    `SELECT id, name, ownerId FROM restaurants WHERE id = 360001`
+    `SELECT id, name, ownerId FROM restaurants WHERE id = 360002`
   );
+  console.log("Restaurant query complete.");
 
-  console.log("Restaurant 360001:");
+  console.log("Restaurant 360002:");
   console.log(restaurants);
 
-  // Get the user info for that owner
+  console.log("Querying for restaurant owner...");
   const [users] = await connection.execute(
-    `SELECT id, openId, role FROM users WHERE id = (SELECT ownerId FROM restaurants WHERE id = 360001)`
+    `SELECT id, openId, role FROM users WHERE id = (SELECT ownerId FROM restaurants WHERE id = 360002)`
   );
+  console.log("Owner query complete.");
 
   console.log("\nRestaurant owner:");
   console.log(users);

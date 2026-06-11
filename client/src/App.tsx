@@ -14,6 +14,7 @@ import OrderHistory from "./pages/OrderHistory";
 import UserProfile from "./pages/UserProfile";
 import RateOrder from "./pages/RateOrder";
 import RestaurantDashboard from "./pages/RestaurantDashboard";
+import MenuManagement from "./pages/MenuManagement";
 import DriverDashboard from "./pages/DriverDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 // Removed MenuManagement (mock)
@@ -34,6 +35,7 @@ function Router() {
       <Route path={"/profile"} component={UserProfile} />
       <Route path={"/rate-order/:id"} component={RateOrder} />
       <Route path={"/restaurant-dashboard"} component={RestaurantDashboard} />
+      <Route path={"/restaurant-dashboard/menu"} component={MenuManagement} />
       <Route path={"/driver-dashboard"} component={DriverDashboard} />
       <Route path={"/admin-dashboard"} component={AdminDashboard} />
       <Route path={"/404"} component={NotFound} />
