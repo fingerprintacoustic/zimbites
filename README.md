@@ -1,5 +1,9 @@
 # ZimBites - Multi-Vendor Food Delivery Platform
 
+> [!IMPORTANT]
+> **🤖 AI AGENT ONBOARDING:**
+> This repository is managed by multiple AI agents (Manus, OpenHands, ChatGPT). To prevent code conflicts and save credits, **read [AGENT_SYNC.md](./AGENT_SYNC.md) and [AGENT_SYNC_GUIDE.md](./AGENT_SYNC_GUIDE.md) BEFORE starting any task.** These files contain the live project status, database state, and multi-agent coordination rules.
+
 A production-ready multi-vendor food delivery platform similar to Uber Eats, DoorDash, or Glovo, branded as ZimBites for the Zimbabwe market.
 
 ![ZimBites Logo](https://via.placeholder.com/800x200?text=ZimBites+Food+Delivery)

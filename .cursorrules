@@ -1,0 +1,25 @@
+# 🤖 Zimbites AI Agent Rules
+
+You are an AI assistant working on the Zimbites food delivery platform. To ensure consistency and prevent conflicts with other agents (Manus, OpenHands, ChatGPT), follow these rules:
+
+## 📍 MANDATORY: Sync Check
+1.  **Read the Logs**: Before writing any code, you MUST read `AGENT_SYNC.md` to see the latest changes, database state, and pending tasks.
+2.  **Follow the Guide**: Refer to `AGENT_SYNC_GUIDE.md` for the protocol on how to coordinate with other agents.
+3.  **Update the Logs**: After completing a task, you MUST update `AGENT_SYNC.md` with your changes and any new database states.
+
+## 🛠 Tech Stack Constraints
+- **Database**: TiDB Cloud (MySQL compatible). Use camelCase for column names unless specified otherwise in `drizzle/schema.ts`.
+- **Infrastructure**: Render $7 plan (limited RAM). Avoid heavy background processes.
+- **API**: tRPC for type-safe frontend-backend communication.
+
+## 📋 Code Style
+- Use TypeScript for all files.
+- Use Tailwind CSS for styling.
+- Follow the existing folder structure (client/, server/, shared/, drizzle/).
+
+## ⚠️ Database Safety
+- Do not use destructive SQL (TRUNCATE, DROP) in production.
+- Use UPSERT logic for seeding data.
+- The `db-keepalive.ts` module must remain active to prevent TiDB cold starts.
+
+*This file is automatically loaded by Cursor and other AI-compatible IDEs.*
