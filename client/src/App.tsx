@@ -17,6 +17,8 @@ import RestaurantDashboard from "./pages/RestaurantDashboard";
 import MenuManagement from "./pages/MenuManagement";
 import DriverDashboard from "./pages/DriverDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import RestaurantRegistration from "./pages/RestaurantRegistration";
+import DriverRegistration from "./pages/DriverRegistration";
 // Removed MenuManagement (mock)
 // Removed OrderManagement (mock)
 // Removed DriverDeliveryDashboard (mock)
@@ -38,6 +40,8 @@ function Router() {
       <Route path={"/restaurant-dashboard/menu"} component={MenuManagement} />
       <Route path={"/driver-dashboard"} component={DriverDashboard} />
       <Route path={"/admin-dashboard"} component={AdminDashboard} />
+      <Route path={"/register-restaurant"} component={RestaurantRegistration} />
+      <Route path={"/register-driver"} component={DriverRegistration} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

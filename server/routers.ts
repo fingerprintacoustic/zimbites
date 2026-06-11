@@ -138,10 +138,14 @@ export const appRouter = router({
         description: z.string().optional(),
         address: z.string().min(1),
         phoneNumber: z.string().optional(),
-        latitude: z.string().optional(),
-        longitude: z.string().optional(),
+        latitude: z.number().optional(),
+        longitude: z.number().optional(),
         minOrderAmount: z.number().optional(),
         deliveryRadius: z.number().optional(),
+        bankAccountName: z.string().optional(),
+        bankAccountNumber: z.string().optional(),
+        bankName: z.string().optional(),
+        bankBranch: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         if (!ctx.user?.id) throw new TRPCError({ code: "UNAUTHORIZED" });
@@ -152,10 +156,14 @@ export const appRouter = router({
           description: input.description,
           address: input.address,
           phoneNumber: input.phoneNumber,
-          latitude: input.latitude,
-          longitude: input.longitude,
+          latitude: input.latitude?.toString(),
+          longitude: input.longitude?.toString(),
           minOrderAmount: input.minOrderAmount || 0,
           deliveryRadius: input.deliveryRadius || 15,
+          bankAccountName: input.bankAccountName,
+          bankAccountNumber: input.bankAccountNumber,
+          bankName: input.bankName,
+          bankBranch: input.bankBranch,
           isApproved: 0,
           isActive: 0,
         });
@@ -938,9 +946,17 @@ export const appRouter = router({
     
     register: protectedProcedure
       .input(z.object({
+        name: z.string().min(1),
         phoneNumber: z.string().min(1),
-        vehicleType: z.enum(["motorcycle", "car", "bicycle"]),
-        licensePlate: z.string().optional(),
+        licenseNumber: z.string().min(1),
+        vehicleType: z.enum(["motorcycle", "car", "van"]),
+        licensePlate: z.string().min(1),
+        vehicleColor: z.string().optional(),
+        bankAccountName: z.string().optional(),
+        bankAccountNumber: z.string().optional(),
+        bankName: z.string().optional(),
+        bankBranch: z.string().optional(),
+        withdrawalMethod: z.enum(["bank_transfer", "mobile_money", "cash"]).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         if (!ctx.user?.id) throw new TRPCError({ code: "UNAUTHORIZED" });
@@ -952,15 +968,24 @@ export const appRouter = router({
         
         const result = await db.createDriver({
           userId: ctx.user.id,
+          name: input.name,
           phoneNumber: input.phoneNumber,
+          licenseNumber: input.licenseNumber,
           vehicleType: input.vehicleType,
           licensePlate: input.licensePlate,
+          vehicleColor: input.vehicleColor,
+          bankAccountName: input.bankAccountName,
+          bankAccountNumber: input.bankAccountNumber,
+          bankName: input.bankName,
+          bankBranch: input.bankBranch,
           status: "offline",
+          isApproved: 0,
         });
         
         // Create wallet
         await db.createDriverWallet({
           driverId: result.insertId as number,
+          withdrawalMethod: input.withdrawalMethod || "bank_transfer",
         });
         
         return { success: true, driverId: result.insertId };
