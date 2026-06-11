@@ -1102,3 +1102,43 @@ export async function updatePayoutStatus(id: number, status: string) {
     processedAt: new Date()
   }).where(eq(payouts.id, id));
 }
+
+
+// GPS and Location queries
+export async function getDriverAssignmentById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(driverAssignments)
+    .where(eq(driverAssignments.id, id))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getDriverAssignmentByOrder(orderId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(driverAssignments)
+    .where(eq(driverAssignments.orderId, orderId))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateAssignmentLocation(assignmentId: number, latitude: string, longitude: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(driverAssignments).set({
+    currentLatitude: latitude,
+    currentLongitude: longitude,
+    lastLocationUpdate: new Date(),
+  }).where(eq(driverAssignments.id, assignmentId));
+}
+
+export async function getActiveDeliveries(driverId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(driverAssignments)
+    .where(and(
+      eq(driverAssignments.driverId, driverId),
+      inArray(driverAssignments.status, ["accepted", "picked_up"])
+    ));
+}

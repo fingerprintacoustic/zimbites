@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -224,6 +224,9 @@ export const driverAssignments = mysqlTable("driverAssignments", {
   acceptedAt: timestamp("acceptedAt"),
   pickedUpAt: timestamp("pickedUpAt"),
   deliveredAt: timestamp("deliveredAt"),
+  currentLatitude: decimal("currentLatitude", { precision: 10, scale: 8 }),
+  currentLongitude: decimal("currentLongitude", { precision: 11, scale: 8 }),
+  lastLocationUpdate: timestamp("lastLocationUpdate"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

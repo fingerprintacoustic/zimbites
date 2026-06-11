@@ -3,6 +3,7 @@ import { router, publicProcedure, protectedProcedure, restaurantOwnerProcedure, 
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
+import { gpsRouter } from "./gps-router";
 
 const ORDER_STATUSES = ["pending", "confirmed", "preparing", "ready", "picked_up", "in_transit", "delivered", "cancelled", "rejected", "refunded"] as const;
 
@@ -1310,8 +1311,9 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         await db.setPlatformSetting(input.key, input.value, input.description);
         return { success: true };
-      }),
+            }),
   }),
-});
 
+  gps: gpsRouter,
+});
 export type AppRouter = typeof appRouter;
