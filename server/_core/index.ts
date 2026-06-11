@@ -10,6 +10,9 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { startDatabaseKeepAlive, stopDatabaseKeepAlive } from "./db-keepalive";
+import * as db from "../db";
+import { menuCategories, menuItems } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -40,6 +43,88 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerDevLoginRoute(app);
+
+  // Scheduled Auto-Heal Route
+  app.post("/api/scheduled/auto-heal", async (req, res) => {
+    console.log("[Auto-Heal] Starting check...");
+    try {
+      const database = await db.getDb();
+      if (!database) throw new Error("Database not available");
+
+      const allRestaurants = await db.getApprovedRestaurants();
+      let healedCount = 0;
+
+      for (const restaurant of allRestaurants) {
+        const categories = await database
+          .select()
+          .from(menuCategories)
+          .where(eq(menuCategories.restaurantId, restaurant.id));
+
+        if (categories.length === 0) {
+          console.log(`[Auto-Heal] Restaurant ${restaurant.name} (ID: ${restaurant.id}) has no menu. Reseeding...`);
+          
+          // Basic Reseed Logic
+          const catData = [
+            { restaurantId: restaurant.id, name: "Main Course", description: "Delicious main dishes" },
+            { restaurantId: restaurant.id, name: "Sides", description: "Tasty sides" },
+            { restaurantId: restaurant.id, name: "Drinks", description: "Refreshing beverages" },
+          ];
+
+          for (const cat of catData) {
+            const result = await database.insert(menuCategories).values(cat);
+            const catId = (result as any)[0].insertId;
+            
+            await database.insert(menuItems).values({
+              restaurantId: restaurant.id,
+              categoryId: Number(catId),
+              name: `Sample ${cat.name} Item`,
+              description: "Automatically generated for self-healing",
+              price: 1000,
+              isAvailable: 1,
+              preparationTime: 15
+            });
+          }
+          healedCount++;
+        }
+      }
+
+      res.json({ success: true, healedCount });
+    } catch (error) {
+      console.error("[Auto-Heal] Error:", error);
+      res.status(500).json({ error: String(error) });
+    }
+  });
+
+  // Error Reporting Route
+  app.post("/api/report-error", async (req, res) => {
+    const { error, stack, url } = req.body;
+    console.error(`[Frontend Error] ${error} at ${url}`);
+    
+    // Here we would trigger Manus API if MANUS_API_KEY is available
+    if (process.env.MANUS_API_KEY) {
+      try {
+        const response = await fetch("https://api.manus.im/v2/task.create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.MANUS_API_KEY}`
+          },
+          body: JSON.stringify({
+            message: {
+              content: `The Zimbites frontend reported an error at ${url}: ${error}. Stack: ${stack}. Please investigate and fix.`
+            }
+          })
+        });
+        const data = await response.json();
+        console.log("[Manus Trigger] Task created:", data);
+      } catch (e) {
+        console.error("[Manus Trigger] Failed:", e);
+      }
+    }
+    
+    res.json({ success: true });
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",

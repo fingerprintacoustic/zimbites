@@ -113,7 +113,8 @@ This file is a shared "Source of Truth" for all AI agents (Manus, OpenHands, Cha
 - [ ] **Real-time Updates**: Verify Socket.io or tRPC subscriptions
 - [ ] **Driver App**: Further testing of driver dashboard
 - [ ] **Performance**: Monitor database connection pool usage
-- [ ] **Error Logging**: Set up centralized error tracking
+- [x] **Error Logging**: Set up centralized error tracking via `/api/report-error` and ErrorBoundary.
+- [x] **Self-Healing**: Implemented `/api/scheduled/auto-heal` to automatically reseed missing menus.
 
 ---
 

@@ -21,6 +21,20 @@ class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
+  componentDidCatch(error: Error, errorInfo: any) {
+    // Automatically report error to the server
+    fetch("/api/report-error", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        error: error.message,
+        stack: error.stack,
+        url: window.location.href,
+        componentStack: errorInfo.componentStack,
+      }),
+    }).catch(console.error);
+  }
+
   render() {
     if (this.state.hasError) {
       return (
