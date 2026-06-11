@@ -47,24 +47,40 @@ export default function RestaurantDashboard() {
   const acceptOrder = trpc.order.accept.useMutation({
     onSuccess: () => {
       utils.order.getByRestaurant.invalidate();
+    },
+    onError: (error) => {
+      console.error("Accept order error:", error);
+      alert(`Error accepting order: ${error.message}`);
     }
   });
 
   const rejectOrder = trpc.order.reject.useMutation({
     onSuccess: () => {
       utils.order.getByRestaurant.invalidate();
+    },
+    onError: (error) => {
+      console.error("Reject order error:", error);
+      alert(`Error rejecting order: ${error.message}`);
     }
   });
 
   const startPreparing = trpc.order.startPreparing.useMutation({
     onSuccess: () => {
       utils.order.getByRestaurant.invalidate();
+    },
+    onError: (error) => {
+      console.error("Start preparing error:", error);
+      alert(`Error starting preparation: ${error.message}`);
     }
   });
 
   const markReady = trpc.order.markReady.useMutation({
     onSuccess: () => {
       utils.order.getByRestaurant.invalidate();
+    },
+    onError: (error) => {
+      console.error("Mark ready error:", error);
+      alert(`Error marking ready: ${error.message}`);
     }
   });
 
@@ -234,8 +250,8 @@ export default function RestaurantDashboard() {
                             </p>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => rejectOrder.mutate({ orderId: order.id, reason: "Restaurant unavailable" })}>Reject</Button>
-                            <Button size="sm" onClick={() => acceptOrder.mutate({ orderId: order.id })}>Accept & Prepare</Button>
+                            <Button size="sm" variant="outline" onClick={() => rejectOrder.mutate({ orderId: order.id, reason: "Restaurant unavailable" })} disabled={rejectOrder.isPending}>Reject</Button>
+                            <Button size="sm" onClick={() => acceptOrder.mutate({ orderId: order.id })} disabled={acceptOrder.isPending}>{acceptOrder.isPending ? "Processing..." : "Accept & Prepare"}</Button>
                           </div>
                         </div>
                         <p className="text-sm text-gray-600 mt-2">Total: ZWL {(order.total / 100).toFixed(2)}</p>
@@ -259,7 +275,7 @@ export default function RestaurantDashboard() {
                             <p className="font-bold">{order.orderNumber}</p>
                             <Badge className="bg-purple-100 text-purple-800 mt-1">Preparing</Badge>
                           </div>
-                          <Button size="sm" onClick={() => markReady.mutate({ orderId: order.id })}>Mark Ready</Button>
+                          <Button size="sm" onClick={() => markReady.mutate({ orderId: order.id })} disabled={markReady.isPending}>{markReady.isPending ? "Processing..." : "Mark Ready"}</Button>
                         </div>
                       </div>
                     ))}
