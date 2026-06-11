@@ -139,5 +139,50 @@ This file is a shared "Source of Truth" for all AI agents (Manus, OpenHands, Cha
 - ❌ Don't ignore schema naming conventions
 
 ---
-**Last Updated**: June 11, 2026 - 08:50 UTC by Manus
+**Last Updated**: June 11, 2026 - 16:30 UTC by Manus
 **Next Agent**: Please update this file when you complete your tasks.
+
+---
+
+## 🔧 Latest Fixes Applied (June 11, 2026 - 16:30 UTC)
+
+### Menu Management UI Connected to tRPC Backend
+**Status**: ✅ IMPLEMENTED & COMMITTED
+
+**Changes Made**:
+1. **MenuManagement.tsx** - Full tRPC Integration:
+   - Fetches live menu data using `trpc.menu.getByRestaurant.useQuery()`
+   - Implements `createItem`, `updateItem`, and `deleteItem` mutations
+   - Added edit dialog for modifying existing menu items
+   - Proper price conversion (ZWL display ↔ cents storage)
+   - Automatic refetch after mutations
+
+2. **App.tsx** - Added Routing:
+   - Added route `/restaurant-dashboard/menu` for menu management
+
+3. **RestaurantDashboard.tsx** - Updated Menu Tab:
+   - Replaced "Coming Soon" placeholder with link to Menu Management
+   - Added descriptive text
+
+**Files Modified**: 
+- `client/src/pages/MenuManagement.tsx`
+- `client/src/App.tsx`
+- `client/src/pages/RestaurantDashboard.tsx`
+
+**Commit**: `4b349f6`
+**Status**: ✅ PUSHED TO GITHUB
+
+### Order Visibility Verification
+**Status**: ✅ VERIFIED
+
+**Findings**:
+- Backend `getOrdersByRestaurant()` function works correctly
+- Restaurant 360002 (Spice Garden) has 2 pending orders
+- Owner account: `restaurant-demo-002` (User ID: 90005)
+- Orders are correctly associated with restaurants in database
+
+**Root Cause of Missing Orders**: Testing with wrong restaurant owner account
+
+**Solution**: Use correct credentials:
+- **Restaurant**: Spice Garden (ID: 360002)
+- **Owner OpenID**: `restaurant-demo-002`
