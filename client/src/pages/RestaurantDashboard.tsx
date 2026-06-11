@@ -22,6 +22,8 @@ const ORDER_STATUSES = {
 
 export default function RestaurantDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [acceptingOrderId, setAcceptingOrderId] = useState<number | null>(null);
+  const [acceptError, setAcceptError] = useState<string | null>(null);
   const { logout } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -45,18 +47,59 @@ export default function RestaurantDashboard() {
   );
 
   const acceptOrder = trpc.order.accept.useMutation({
-    onSuccess: () => {
-      utils.order.getByRestaurant.invalidate();
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await utils.order.getByRestaurant.cancel();
+      
+      // Snapshot the previous value
+      const previousOrders = utils.order.getByRestaurant.getData({ restaurantId });
+      
+      // Optimistically update to the new value
+      if (previousOrders) {
+        utils.order.getByRestaurant.setData(
+          { restaurantId },
+          previousOrders.map((order: any) =>
+            order.id === variables.orderId
+              ? { ...order, status: 'confirmed' }
+              : order
+          )
+        );
+      }
+      
+      return { previousOrders };
     },
-    onError: (error) => {
-      console.error("Accept order error:", error);
-      alert(`Error accepting order: ${error.message}`);
+    onSuccess: (data, variables) => {
+      console.log(`Order ${variables.orderId} accepted successfully`);
+      setAcceptingOrderId(null);
+      setAcceptError(null);
+      // Refetch orders after successful acceptance
+      utils.order.getByRestaurant.invalidate({ restaurantId });
+    },
+    onError: (error, variables, context) => {
+      console.error(`Error accepting order ${variables.orderId}:`, error);
+      // Revert on error
+      if (context?.previousOrders) {
+        utils.order.getByRestaurant.setData(
+          { restaurantId },
+          context.previousOrders
+        );
+      }
+      setAcceptingOrderId(null);
+      setAcceptError(`Failed to accept order ${variables.orderId}: ${error.message}`);
+      // Show error for 5 seconds then clear
+      setTimeout(() => setAcceptError(null), 5000);
     }
   });
 
+  const handleAcceptOrder = (orderId: number) => {
+    setAcceptingOrderId(orderId);
+    setAcceptError(null);
+    acceptOrder.mutate({ orderId });
+  };
+
   const rejectOrder = trpc.order.reject.useMutation({
     onSuccess: () => {
-      utils.order.getByRestaurant.invalidate();
+      utils.order.getByRestaurant.invalidate({ restaurantId });
     },
     onError: (error) => {
       console.error("Reject order error:", error);
@@ -66,7 +109,7 @@ export default function RestaurantDashboard() {
 
   const startPreparing = trpc.order.startPreparing.useMutation({
     onSuccess: () => {
-      utils.order.getByRestaurant.invalidate();
+      utils.order.getByRestaurant.invalidate({ restaurantId });
     },
     onError: (error) => {
       console.error("Start preparing error:", error);
@@ -76,7 +119,7 @@ export default function RestaurantDashboard() {
 
   const markReady = trpc.order.markReady.useMutation({
     onSuccess: () => {
-      utils.order.getByRestaurant.invalidate();
+      utils.order.getByRestaurant.invalidate({ restaurantId });
     },
     onError: (error) => {
       console.error("Mark ready error:", error);
@@ -234,6 +277,11 @@ export default function RestaurantDashboard() {
           <TabsContent value="orders" className="space-y-4">
             <div className="space-y-4">
               {/* Pending Orders */}
+              {acceptError && (
+                <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                  {acceptError}
+                </div>
+              )}
               {pendingOrders.length > 0 && (
                 <Card>
                   <CardHeader>
@@ -250,8 +298,8 @@ export default function RestaurantDashboard() {
                             </p>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => rejectOrder.mutate({ orderId: order.id, reason: "Restaurant unavailable" })} disabled={rejectOrder.isPending}>Reject</Button>
-                            <Button size="sm" onClick={() => acceptOrder.mutate({ orderId: order.id })} disabled={acceptOrder.isPending}>{acceptOrder.isPending ? "Processing..." : "Accept & Prepare"}</Button>
+                            <Button size="sm" variant="outline" onClick={() => rejectOrder.mutate({ orderId: order.id, reason: "Restaurant unavailable" })} disabled={rejectOrder.isPending || acceptingOrderId === order.id}>Reject</Button>
+                            <Button size="sm" onClick={() => handleAcceptOrder(order.id)} disabled={acceptingOrderId === order.id || acceptOrder.isPending}>{acceptingOrderId === order.id ? "Processing..." : "Accept & Prepare"}</Button>
                           </div>
                         </div>
                         <p className="text-sm text-gray-600 mt-2">Total: ZWL {(order.total / 100).toFixed(2)}</p>

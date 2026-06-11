@@ -1,37 +1,31 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { users, restaurants } from "./drizzle/schema";
-import { eq } from "drizzle-orm";
 
-async function checkRestaurantOwner() {
+async function checkRestaurant() {
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) throw new Error("DATABASE_URL not set");
 
   const connection = await mysql.createConnection(dbUrl);
-  const db = drizzle(connection);
 
-  // Get restaurant owner
-  const owners = await db
-    .select()
-    .from(users)
-    .where(eq(users.role, "restaurant"));
+  // Get the restaurant owner for restaurant 360001
+  const [restaurants] = await connection.execute(
+    `SELECT id, name, ownerId FROM restaurants WHERE id = 360001`
+  );
 
-  console.log("Restaurant owners:");
-  owners.forEach(o => {
-    console.log(`- ID: ${o.id}, Email: ${o.email}, OpenID: ${o.openId}`);
-  });
+  console.log("Restaurant 360001:");
+  console.log(restaurants);
 
-  // Get restaurants
-  const rests = await db.select().from(restaurants);
-  console.log("\nRestaurants:");
-  rests.forEach(r => {
-    console.log(`- ID: ${r.id}, Name: ${r.name}, Owner ID: ${r.ownerId}`);
-  });
+  // Get the user info for that owner
+  const [users] = await connection.execute(
+    `SELECT id, openId, role FROM users WHERE id = (SELECT ownerId FROM restaurants WHERE id = 360001)`
+  );
+
+  console.log("\nRestaurant owner:");
+  console.log(users);
 
   await connection.end();
 }
 
-checkRestaurantOwner().catch(console.error);
+checkRestaurant().catch(console.error);
