@@ -285,6 +285,7 @@ export async function createOrder(data: InsertOrder) {
     paymentMethod: data.paymentMethod,
     paymentStatus: data.paymentStatus || "pending",
     paymentReference: data.paymentReference,
+    currency: data.currency,
   };
 
   for (const [col, val] of Object.entries(columnMap)) {
@@ -390,14 +391,15 @@ export async function createOrderItems(items: InsertOrderItem[]) {
   
   // Use raw SQL to insert order items to ensure all fields are properly handled
   for (const item of items) {
-    const query = `INSERT INTO orderItems (orderId, menuItemId, name, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?, ?)`;
+    const query = `INSERT INTO orderItems (orderId, menuItemId, name, quantity, price, subtotal, currency) VALUES (?, ?, ?, ?, ?, ?, ?)`;
     const values = [
       item.orderId,
       item.menuItemId,
       item.name,
       item.quantity,
       item.price,
-      item.subtotal || (item.quantity * item.price)
+      item.subtotal || (item.quantity * item.price),
+      item.currency
     ];
     
     try {

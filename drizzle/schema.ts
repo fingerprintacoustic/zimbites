@@ -45,6 +45,7 @@ export const cartItems = mysqlTable("cartItems", {
   menuItemId: int("menuItemId").notNull(),
   quantity: int("quantity").default(1).notNull(),
   price: int("price").notNull(), // price at time of adding to cart
+  currency: mysqlEnum("currency", ["USD", "ZWL"]).default("ZWL").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -96,6 +97,7 @@ export const menuItems = mysqlTable("menuItems", {
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   price: int("price").notNull(), // in cents
+  currency: mysqlEnum("currency", ["USD", "ZWL"]).default("ZWL").notNull(),
   imageUrl: varchar("imageUrl", { length: 512 }),
   isAvailable: int("isAvailable").default(1).notNull(),
   preparationTime: int("preparationTime").default(15).notNull(), // in minutes
@@ -138,6 +140,7 @@ export const orders = mysqlTable("orders", {
   platformCommission: int("platformCommission").notNull(), // in cents
   tip: int("tip").default(0).notNull(), // in cents
   total: int("total").notNull(), // in cents
+  currency: mysqlEnum("currency", ["USD", "ZWL"]).default("ZWL").notNull(),
   paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(),
   paymentStatus: mysqlEnum("paymentStatus", ["pending", "completed", "failed", "refunded"]).default("pending").notNull(),
   paymentReference: varchar("paymentReference", { length: 255 }),
@@ -173,6 +176,7 @@ export const orderItems = mysqlTable("orderItems", {
   quantity: int("quantity").notNull(),
   price: int("price").notNull(), // price at time of order (in cents)
   subtotal: int("subtotal").notNull(), // quantity * price (in cents)
+  currency: mysqlEnum("currency", ["USD", "ZWL"]).default("ZWL").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

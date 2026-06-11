@@ -29,6 +29,20 @@
       "when": 1781041661581,
       "tag": "0003_concerned_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1781201547324,
+      "tag": "0004_bored_iron_fist",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1781201880171,
+      "tag": "0005_perfect_romulus",
+      "breakpoints": true
     }
   ]
 }

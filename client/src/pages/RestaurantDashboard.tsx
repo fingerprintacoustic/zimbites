@@ -8,6 +8,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { TrendingUp, Users, ShoppingBag, Clock, LogOut } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
+import { useState } from "react";
+import { Link } from "wouter";
 
 const ORDER_STATUSES = {
   pending: "bg-yellow-100 text-yellow-800",

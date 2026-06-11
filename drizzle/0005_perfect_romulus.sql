@@ -1,0 +1,1 @@
+ALTER TABLE `orderItems` ADD `currency` enum('USD','ZWL') DEFAULT 'ZWL' NOT NULL;

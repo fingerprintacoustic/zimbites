@@ -279,6 +279,7 @@ export const appRouter = router({
         name: z.string().min(1),
         description: z.string().optional(),
         price: z.number(),
+        currency: z.enum(["USD", "ZWL"]).default("ZWL"),
         imageUrl: z.string().optional(),
         preparationTime: z.number().optional(),
       }))
@@ -296,6 +297,7 @@ export const appRouter = router({
           name: input.name,
           description: input.description,
           price: input.price,
+          currency: input.currency,
           imageUrl: input.imageUrl,
           preparationTime: input.preparationTime || 15,
         });
@@ -308,6 +310,7 @@ export const appRouter = router({
         name: z.string().optional(),
         description: z.string().optional(),
         price: z.number().optional(),
+        currency: z.enum(["USD", "ZWL"]).optional(),
         imageUrl: z.string().optional(),
         preparationTime: z.number().optional(),
         isAvailable: z.boolean().optional(),
@@ -319,6 +322,7 @@ export const appRouter = router({
           name: input.name,
           description: input.description,
           price: input.price,
+          currency: input.currency,
           imageUrl: input.imageUrl,
           preparationTime: input.preparationTime,
           isAvailable: input.isAvailable ? 1 : 0,
@@ -352,6 +356,7 @@ export const appRouter = router({
           name: z.string(),
           price: z.number(),
           quantity: z.number(),
+          currency: z.enum(["USD", "ZWL"]).default("ZWL"),
         })).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -385,6 +390,9 @@ export const appRouter = router({
         const restaurant = await db.getRestaurantById(input.restaurantId);
         console.log("[OrderCreate] Restaurant found:", !!restaurant);
         if (!restaurant) throw new TRPCError({ code: "NOT_FOUND", message: "Restaurant not found" });
+
+        // Determine currency from the first cart item or default
+        const orderCurrency = cartItemsList[0]?.currency || "ZWL";
 
         // Calculate totals
         let subtotal = 0;
@@ -452,6 +460,7 @@ export const appRouter = router({
             platformCommission: platformCommission,
             tip: input.tip || 0,
             total,
+            currency: orderCurrency,
             paymentMethod: input.paymentMethod,
             paymentReference: input.paymentReference,
             paymentStatus: "pending",

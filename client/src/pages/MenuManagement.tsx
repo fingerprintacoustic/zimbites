@@ -14,7 +14,7 @@ import { Spinner } from "@/components/ui/spinner";
 export default function MenuManagement() {
   const { user } = useAuth();
   const [expandedCategory, setExpandedCategory] = useState<number | null>(null);
-  const [newItemForm, setNewItemForm] = useState({ name: "", description: "", price: "", categoryId: "" });
+  const [newItemForm, setNewItemForm] = useState({ name: "", description: "", price: "", categoryId: "", currency: "ZWL" });
   const [editingItem, setEditingItem] = useState<any | null>(null);
 
   const handleEditItemChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -71,6 +71,7 @@ export default function MenuManagement() {
         name: newItemForm.name,
         description: newItemForm.description,
         price: parseFloat(newItemForm.price) * 100, // Convert to cents
+        currency: newItemForm.currency as "USD" | "ZWL",
       });
       toast.success("Item added successfully");
       setNewItemForm({ name: "", description: "", price: "", categoryId: "" });
@@ -97,6 +98,7 @@ export default function MenuManagement() {
         name: editingItem.name,
         description: editingItem.description,
         price: parseFloat(editingItem.price) * 100, // Convert to cents
+        currency: editingItem.currency as "USD" | "ZWL",
         categoryId: parseInt(editingItem.categoryId),
       });
       toast.success("Item updated successfully");
@@ -179,6 +181,17 @@ export default function MenuManagement() {
                     onChange={(e) => setNewItemForm({ ...newItemForm, price: e.target.value })}
                   />
                 </div>
+                <div>
+                  <label className="text-sm font-medium">Currency *</label>
+                  <select
+                    className="w-full border rounded px-3 py-2"
+                    value={newItemForm.currency}
+                    onChange={(e) => setNewItemForm({ ...newItemForm, currency: e.target.value })}
+                  >
+                    <option value="ZWL">ZWL</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
                 <DialogClose asChild>
                   <Button onClick={handleAddItem} className="w-full bg-orange-600 hover:bg-orange-700">
                     Add Item
@@ -242,6 +255,18 @@ export default function MenuManagement() {
                     onChange={handleEditItemChange}
                   />
                 </div>
+                <div>
+                  <label className="text-sm font-medium">Currency *</label>
+                  <select
+                    name="currency"
+                    className="w-full border rounded px-3 py-2"
+                    value={editingItem.currency}
+                    onChange={handleEditItemChange}
+                  >
+                    <option value="ZWL">ZWL</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
                 <DialogClose asChild>
                   <Button onClick={handleUpdateItem} className="w-full bg-orange-600 hover:bg-orange-700">
                     Save Changes
@@ -292,7 +317,7 @@ export default function MenuManagement() {
                           </div>
                           <div className="flex items-center gap-4">
                             <span className="font-bold text-orange-600">
-                              ZWL {(item.price / 100).toFixed(2)}
+                              {item.currency} {(item.price / 100).toFixed(2)}
                             </span>
                             <div className="flex gap-2">
                               <Button

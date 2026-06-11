@@ -29,6 +29,7 @@ interface CartData {
     name: string;
     price: number;
     quantity: number;
+    currency: "USD" | "ZWL";
   }>;
 }
 
@@ -133,7 +134,8 @@ export default function Checkout() {
           menuItemId: item.menuItemId,
           name: item.name,
           quantity: item.quantity,
-          price: item.price
+          price: item.price,
+          currency: item.currency,
         })),
       });
 
@@ -297,7 +299,7 @@ export default function Checkout() {
                       onClick={() => setSelectedTip(amount)}
                       className="text-sm"
                     >
-                      {amount === null ? "Custom" : `ZWL ${(amount / 100).toFixed(2)}`}
+                      {amount === null ? "Custom" : `${cartData.items[0]?.currency || "ZWL"} ${(amount / 100).toFixed(2)}`}
                     </Button>
                   ))}
                 </div>
@@ -360,31 +362,31 @@ export default function Checkout() {
                 <span>
                   {item.name} x {item.quantity}
                 </span>
-                <span>ZWL {((item.price * item.quantity) / 100).toFixed(2)}</span>
+                  <span>{item.currency} {((item.price * item.quantity) / 100).toFixed(2)}</span>
               </div>
             ))}
             <div className="border-t pt-3 space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>ZWL {(cartTotal / 100).toFixed(2)}</span>
+                <span>{cartData.items[0]?.currency || "ZWL"} {(cartTotal / 100).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Delivery Fee</span>
-                <span>ZWL {(deliveryFee / 100).toFixed(2)}</span>
+                <span>{cartData.items[0]?.currency || "ZWL"} {(deliveryFee / 100).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Platform Commission</span>
-                <span>ZWL {(platformCommission / 100).toFixed(2)}</span>
+                <span>{cartData.items[0]?.currency || "ZWL"} {(platformCommission / 100).toFixed(2)}</span>
               </div>
               {tipAmount > 0 && (
                 <div className="flex justify-between">
                   <span>Tip</span>
-                  <span>ZWL {(tipAmount / 100).toFixed(2)}</span>
+                  <span>{cartData.items[0]?.currency || "ZWL"} {(tipAmount / 100).toFixed(2)}</span>
                 </div>
               )}
               <div className="border-t pt-2 flex justify-between font-bold text-lg">
                 <span>Total</span>
-                <span>ZWL {(total / 100).toFixed(2)}</span>
+                <span>{cartData.items[0]?.currency || "ZWL"} {(total / 100).toFixed(2)}</span>
               </div>
             </div>
           </CardContent>
