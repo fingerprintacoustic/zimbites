@@ -50,6 +50,18 @@ export default function AdminDashboard() {
     }
   });
 
+  const rejectRestaurant = trpc.admin.rejectRestaurant.useMutation({
+    onSuccess: () => {
+      utils.admin.getRestaurants.invalidate();
+    }
+  });
+
+  const rejectDriver = trpc.admin.rejectDriver.useMutation({
+    onSuccess: () => {
+      utils.admin.getDrivers.invalidate();
+    }
+  });
+
   if (settingsLoading || statsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -203,7 +215,10 @@ export default function AdminDashboard() {
                         {restaurant.isApproved ? (
                           <Badge className="bg-green-100 text-green-800">Approved</Badge>
                         ) : (
-                          <Button size="sm" onClick={() => approveRestaurant.mutate({ restaurantId: restaurant.id })}>Approve</Button>
+                          <>
+                            <Button size="sm" onClick={() => approveRestaurant.mutate({ restaurantId: restaurant.id })} className="bg-green-600 hover:bg-green-700">Approve</Button>
+                            <Button size="sm" variant="destructive" onClick={() => rejectRestaurant.mutate({ restaurantId: restaurant.id })}>Reject</Button>
+                          </>
                         )}
                         <Button variant="outline" size="sm">Edit</Button>
                       </div>
@@ -235,7 +250,10 @@ export default function AdminDashboard() {
                         {driver.isApproved ? (
                           <Badge className="bg-green-100 text-green-800">Approved</Badge>
                         ) : (
-                          <Button size="sm" onClick={() => approveDriver.mutate({ driverId: driver.id })}>Approve</Button>
+                          <>
+                            <Button size="sm" onClick={() => approveDriver.mutate({ driverId: driver.id })} className="bg-green-600 hover:bg-green-700">Approve</Button>
+                            <Button size="sm" variant="destructive" onClick={() => rejectDriver.mutate({ driverId: driver.id })}>Reject</Button>
+                          </>
                         )}
                         <Button variant="outline" size="sm">View</Button>
                       </div>

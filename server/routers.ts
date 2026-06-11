@@ -1141,6 +1141,13 @@ export const appRouter = router({
         return { success: true };
       }),
     
+    rejectRestaurant: adminProcedure
+      .input(z.object({ restaurantId: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.updateRestaurant(input.restaurantId, { isApproved: 0 });
+        return { success: true };
+      }),
+    
     toggleRestaurantActive: adminProcedure
       .input(z.object({ restaurantId: z.number(), isActive: z.boolean() }))
       .mutation(async ({ input }) => {
@@ -1161,11 +1168,28 @@ export const appRouter = router({
         return { success: true };
       }),
     
+    rejectDriver: adminProcedure
+      .input(z.object({ driverId: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.updateDriver(input.driverId, { isApproved: 0 });
+        return { success: true };
+      }),
+    
     getOrders: adminProcedure
       .input(z.object({ limit: z.number().optional() }).optional())
       .query(async ({ input }) => {
         return db.getAllOrders(input?.limit || 100);
       }),
+    
+    getPendingRestaurants: adminProcedure.query(async () => {
+      const restaurants = await db.getAllRestaurants(true);
+      return restaurants.filter((r: any) => !r.isApproved);
+    }),
+    
+    getPendingDrivers: adminProcedure.query(async () => {
+      const drivers = await db.getAllDrivers(true);
+      return drivers.filter((d: any) => !d.isApproved);
+    }),
     
     getPlatformSettings: protectedProcedure.query(async () => {
       return db.getAllPlatformSettings();

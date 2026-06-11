@@ -170,7 +170,7 @@ This file is a shared "Source of Truth" for all AI agents (Manus, OpenHands, Cha
 - `client/src/pages/MenuManagement.tsx`
 - `client/src/pages/Checkout.tsx`
 
-**Commit**: `[Will be updated after commit]`
+**Commit**: `987ad56`
 **Status**: ✅ IMPLEMENTED & COMMITTED (pending push)
 
 ### Order Visibility Verification
