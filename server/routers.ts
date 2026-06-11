@@ -1098,6 +1098,112 @@ export const appRouter = router({
     }),
   }),
 
+  financial: router({
+    updateRestaurantBankAccount: restaurantOwnerProcedure
+      .input(z.object({
+        restaurantId: z.number(),
+        bankAccountName: z.string(),
+        bankAccountNumber: z.string(),
+        bankName: z.string(),
+        bankBranch: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const restaurant = await db.getRestaurantById(input.restaurantId);
+        if (!restaurant || restaurant.ownerId !== ctx.user?.id) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        await db.updateRestaurant(input.restaurantId, {
+          bankAccountName: input.bankAccountName,
+          bankAccountNumber: input.bankAccountNumber,
+          bankName: input.bankName,
+          bankBranch: input.bankBranch,
+        });
+        return { success: true };
+      }),
+
+    updateDriverBankAccount: driverProcedure
+      .input(z.object({
+        driverId: z.number(),
+        bankAccountName: z.string(),
+        bankAccountNumber: z.string(),
+        bankName: z.string(),
+        bankBranch: z.string(),
+        withdrawalMethod: z.enum(["bank_transfer", "mobile_money", "cash"]),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const driver = await db.getDriverById(input.driverId);
+        if (!driver || driver.userId !== ctx.user?.id) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        await db.updateDriver(input.driverId, {
+          bankAccountName: input.bankAccountName,
+          bankAccountNumber: input.bankAccountNumber,
+          bankName: input.bankName,
+          bankBranch: input.bankBranch,
+        });
+        return { success: true };
+      }),
+
+    getRestaurantPayouts: restaurantOwnerProcedure
+      .input(z.object({ restaurantId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        const restaurant = await db.getRestaurantById(input.restaurantId);
+        if (!restaurant || restaurant.ownerId !== ctx.user?.id) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        return db.getPayoutsByRestaurant(input.restaurantId);
+      }),
+
+    getDriverPayouts: driverProcedure
+      .input(z.object({ driverId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        const driver = await db.getDriverById(input.driverId);
+        if (!driver || driver.userId !== ctx.user?.id) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        return db.getPayoutsByDriver(input.driverId);
+      }),
+
+    requestPayout: protectedProcedure
+      .input(z.object({
+        amount: z.number().positive(),
+        currency: z.enum(["USD", "ZWL"]),
+        payoutMethod: z.enum(["bank_transfer", "mobile_money", "cash"]),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.id) throw new TRPCError({ code: "UNAUTHORIZED" });
+        
+        const driver = await db.getDriverByUserId(ctx.user.id);
+        const restaurants = await db.getRestaurantsByOwner(ctx.user.id);
+
+        if (driver) {
+          const payout = await db.createPayout({
+            driverId: driver.id,
+            amount: input.amount * 100,
+            currency: input.currency,
+            payoutMethod: input.payoutMethod,
+            notes: input.notes,
+            status: "pending",
+          });
+          return payout;
+        } else if (restaurants.length > 0) {
+          const restaurant = restaurants[0];
+          const payout = await db.createPayout({
+            restaurantId: restaurant.id,
+            amount: input.amount * 100,
+            currency: input.currency,
+            payoutMethod: input.payoutMethod,
+            notes: input.notes,
+            status: "pending",
+          });
+          return payout;
+        } else {
+          throw new TRPCError({ code: "FORBIDDEN", message: "User is neither a driver nor a restaurant owner" });
+        }
+      }),
+  }),
+
   admin: router({
     getStats: adminProcedure
       .input(z.object({

@@ -67,6 +67,10 @@ export const restaurants = mysqlTable("restaurants", {
   minOrderAmount: int("minOrderAmount").default(0).notNull(), // in cents
   isActive: int("isActive").default(1).notNull(),
   isApproved: int("isApproved").default(0).notNull(),
+  bankAccountName: varchar("bankAccountName", { length: 255 }),
+  bankAccountNumber: varchar("bankAccountNumber", { length: 255 }),
+  bankName: varchar("bankName", { length: 255 }),
+  bankBranch: varchar("bankBranch", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -198,6 +202,11 @@ export const drivers = mysqlTable("drivers", {
   totalDeliveries: int("totalDeliveries").default(0).notNull(),
   averageRating: varchar("averageRating", { length: 10 }).default("0.0").notNull(),
   totalEarnings: int("totalEarnings").default(0).notNull(), // in cents
+  walletBalance: int("walletBalance").default(0).notNull(), // in cents
+  bankAccountName: varchar("bankAccountName", { length: 255 }),
+  bankAccountNumber: varchar("bankAccountNumber", { length: 255 }),
+  bankName: varchar("bankName", { length: 255 }),
+  bankBranch: varchar("bankBranch", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -246,6 +255,7 @@ export const driverWallets = mysqlTable("driverWallets", {
   pendingEarnings: int("pendingEarnings").default(0).notNull(), // in cents
   totalEarnings: int("totalEarnings").default(0).notNull(), // in cents
   totalTips: int("totalTips").default(0).notNull(), // in cents
+  withdrawalMethod: mysqlEnum("withdrawalMethod", ["bank_transfer", "mobile_money", "cash"]).default("bank_transfer").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -296,6 +306,25 @@ export const platformSettings = mysqlTable("platformSettings", {
 
 export type PlatformSetting = typeof platformSettings.$inferSelect;
 export type InsertPlatformSetting = typeof platformSettings.$inferInsert;
+
+// Payouts
+export const payouts = mysqlTable("payouts", {
+  id: int("id").autoincrement().primaryKey(),
+  restaurantId: int("restaurantId"),
+  driverId: int("driverId"),
+  amount: int("amount").notNull(), // in cents
+  currency: mysqlEnum("currency", ["USD", "ZWL"]).default("ZWL").notNull(),
+  status: mysqlEnum("status", ["pending", "processing", "completed", "failed", "cancelled"]).default("pending").notNull(),
+  payoutMethod: mysqlEnum("payoutMethod", ["bank_transfer", "mobile_money", "cash"]).default("bank_transfer").notNull(),
+  reference: varchar("reference", { length: 255 }),
+  notes: text("notes"),
+  processedAt: timestamp("processedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Payout = typeof payouts.$inferSelect;
+export type InsertPayout = typeof payouts.$inferInsert;
 
 // Notifications
 export const notifications = mysqlTable("notifications", {

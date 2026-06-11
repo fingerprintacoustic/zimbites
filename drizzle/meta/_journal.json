@@ -43,6 +43,13 @@
       "when": 1781201880171,
       "tag": "0005_perfect_romulus",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1781202018715,
+      "tag": "0006_cynical_black_bird",
+      "breakpoints": true
     }
   ]
 }

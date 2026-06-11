@@ -37,6 +37,8 @@ import {
   InsertCart,
   cartItems,
   InsertCartItem,
+  payouts,
+  InsertPayout,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1044,4 +1046,59 @@ export async function deleteMenuCategory(categoryId: number) {
   // Also delete menu items in this category
   await db.delete(menuItems).where(eq(menuItems.categoryId, categoryId));
   return db.delete(menuCategories).where(eq(menuCategories.id, categoryId));
+}
+
+
+// Payout queries
+export async function createPayout(data: InsertPayout) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(payouts).values(data) as unknown as InsertResult;
+  return { insertId: Number(result.insertId) };
+}
+
+export async function getPayoutById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(payouts).where(eq(payouts.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getPayoutsByRestaurant(restaurantId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(payouts)
+    .where(eq(payouts.restaurantId, restaurantId))
+    .orderBy(desc(payouts.createdAt));
+}
+
+export async function getPayoutsByDriver(driverId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(payouts)
+    .where(eq(payouts.driverId, driverId))
+    .orderBy(desc(payouts.createdAt));
+}
+
+export async function getPendingPayouts() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(payouts)
+    .where(eq(payouts.status, "pending"))
+    .orderBy(payouts.createdAt);
+}
+
+export async function updatePayout(id: number, data: Partial<InsertPayout>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(payouts).set(data).where(eq(payouts.id, id));
+}
+
+export async function updatePayoutStatus(id: number, status: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(payouts).set({ 
+    status: status as any,
+    processedAt: new Date()
+  }).where(eq(payouts.id, id));
 }
