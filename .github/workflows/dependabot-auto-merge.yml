@@ -1,0 +1,105 @@
+name: Auto-merge Dependabot PRs
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  check_suite:
+    types: [completed]
+  workflow_run:
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+  commits: read
+  statuses: read
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Wait for CI to complete
+        id: waitci
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = context.payload.pull_request.number;
+            
+            // Wait up to 10 minutes for CI to complete
+            const maxWaitTime = 10 * 60 * 1000;
+            const checkInterval = 10000; // 10 seconds
+            const startTime = Date.now();
+            
+            while (Date.now() - startTime < maxWaitTime) {
+              const { data: checks } = await github.rest.checks.listForRef({
+                owner,
+                repo,
+                ref: context.payload.pull_request.head.sha,
+                status: 'completed'
+              });
+              
+              if (checks.total_count > 0) {
+                const allPassed = checks.check_runs.every(
+                  check => check.conclusion === 'success'
+                );
+                const anyFailed = checks.check_runs.some(
+                  check => check.conclusion === 'failure' || check.conclusion === 'timed_out'
+                );
+                
+                if (allPassed) {
+                  console.log('All checks passed');
+                  return true;
+                }
+                if (anyFailed) {
+                  console.log('Some checks failed');
+                  return false;
+                }
+              }
+              
+              // Also check GitHub Actions status
+              const { data: statuses } = await github.rest.repos.listCommitStatusesForRef({
+                owner,
+                repo,
+                ref: context.payload.pull_request.head.sha
+              });
+              
+              if (statuses.length > 0) {
+                const allSuccess = statuses.every(s => s.state === 'success');
+                const anyFailure = statuses.some(s => s.state === 'failure' || s.state === 'error');
+                
+                if (allSuccess) {
+                  console.log('All statuses passed');
+                  return true;
+                }
+                if (anyFailure) {
+                  console.log('Some statuses failed');
+                  return false;
+                }
+              }
+              
+              await new Promise(r => setTimeout(r, checkInterval));
+            }
+            
+            console.log('Timeout waiting for CI');
+            return false;
+          
+      - name: Auto-merge Dependabot PR
+        if: steps.waitci.result == 'true'
+        run: |
+          echo "Checks passed! Merging PR #${PR_NUMBER}"
+          gh pr merge $PR_NUMBER --squash --delete-branch
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on PR if checks failed
+        if: steps.waitci.result == 'false'
+        run: |
+          echo "Checks did not pass. PR will not be merged automatically."
+          gh pr comment $PR_NUMBER --body "❌ Automated merge skipped: CI checks are not passing. Please review and address any failures."
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
